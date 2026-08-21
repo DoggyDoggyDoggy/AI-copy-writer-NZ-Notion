@@ -7,9 +7,10 @@ Slug: "[city-slug]-travel-guide"
 Description : "Plan your trip to [City Name] with our local insider guide. Discover top sights, best kai, scenic spots, and essential travel tips."
 City: "[city-slug]"
 Tags: ["guide", "[city-slug]", "[north-island|south-island]", "travel-guide"]
-Date: "YYYY-MM-DD"
-Published: true
+Date: null    # ← ALWAYS null on creation. User sets date manually in Notion.
+Published: false  # ← STRICT: ALWAYS false. Never set to true. User toggles manually in Notion.
 Featured: true
+# WORD COUNT: Target 2500–3000 words for Tier 1–2 cities. Shorter acceptable for Tier 3 if data is genuinely scarce — never pad.
 ```
 
 ---
@@ -52,6 +53,21 @@ Featured: true
 
 ---
 
-## Frequently Asked Questions (FAQ)
-[3 concise Q&As covering common traveller concerns.]
+## Your Questions About [City Name], Answered
+
+> Use a warm, conversational H2 — NOT "FAQ". It should feel like a local friend answering.
+> Write 3–4 questions. Each answer: 50–90 words. Direct, honest, specific to THIS city.
+> Questions must reflect what people genuinely search (see FAQ rules in .antigravityrules).
+
+**How many days do you need in [City Name]?**
+[Honest answer. Tier 1: 3+ days. Tier 2: 2 days. Tier 3: 1–2 days as a base. Always explain WHY with specific things to fill the time.]
+
+**Is [City Name] worth visiting? / What is [City Name] known for?**
+[Honest local answer. For Tier 3: be radically honest — "It's not flashy, but here's what makes it worth the detour..."]
+
+**Do you need a car in [City Name]?**
+[Concrete answer: yes/no and why. Include specific examples of what you can't reach without a car.]
+
+**When is the best time to visit [City Name]?**
+[Month-specific. Include a specific reason unique to this city — oyster season, festival, peak wildflower bloom, ski season, etc.]
 ```

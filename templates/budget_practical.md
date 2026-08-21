@@ -7,9 +7,10 @@ Slug: "[city-slug]-on-a-budget-tips"
 Description : "Explore [City Name] without breaking the bank. Free scenic walks, budget-friendly local kai, cheap transport, and insider money-saving tips."
 City: "[city-slug]"
 Tags: ["[city-slug]", "budget-travel", "travel-tips", "free-things-to-do"]
-Date: "YYYY-MM-DD"
-Published: true
+Date: null    # ← ALWAYS null on creation. User sets date manually in Notion.
+Published: false  # ← STRICT: ALWAYS false. Never set to true. User toggles manually in Notion.
 Featured: false
+# WORD COUNT: Target 1500–1800 words IF hacks are plentiful. Write shorter if city has limited verified budget options — no padding.
 ```
 
 ---
@@ -49,4 +50,20 @@ Featured: false
 1. [Practical hack 1]
 2. [Practical hack 2]
 3. [Practical hack 3]
+
+---
+
+## Budget [City Name]: Straight Answers
+
+> Practical close for readers deciding whether this trip fits their wallet.
+> 3 questions. Each: 50–70 words. Give real NZD figures — never vague ranges.
+
+**How much does a day in [City Name] cost on a tight budget?**
+[Give a real NZD breakdown: free activity + $X lunch + $X dinner + $X accommodation = $X–Y/day total. Be specific — name the cheap lunch spot and the DOC campsite or hostel.]
+
+**Is [City Name] cheaper or more expensive than [nearest comparable city]?**
+[Honest comparison. E.g. "Invercargill is significantly cheaper than Queenstown — expect to pay about 30–40% less for accommodation and dining."]
+
+**What's the biggest money trap to avoid in [City Name]?**
+[One specific tourist trap or overpriced thing to skip. Name it directly and give a cheaper alternative.]
 ```

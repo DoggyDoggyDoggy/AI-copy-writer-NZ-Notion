@@ -9,11 +9,14 @@
 
 ## 🎯 Mission & Workflow in Pipeline:
 * **Triggered When**: The user provides 1 or more source articles, URLs, raw notes, or competitor drafts covering a destination/topic.
-* **Pipeline Sequence (Stages 2–5)**:
-  - `Input`: User provides source text / URLs (Stage 1 Research is skipped since source material is provided directly).
+* **Pipeline Sequence**:
+  - `Stage 0 (Pre-Check)`: Before any rewriting, Tui MUST run the same **Notion Pre-Check** as Track A:
+    1. **Duplicate Detection**: Query Notion for the city to check if a similar article already exists. If found, report to the user with options (rewrite into a different angle, update existing, or skip).
+    2. **Internal Link Map**: Query Notion for existing articles in the city's Surrounding Orbit. Build a `{ title, slug, url }` map to use for contextual in-text links.
+  - `Input`: User provides source text / URLs.
   - `Stage 2 (Rewriting)`: Tui deconstructs sources, extracts verified facts, restructures narrative, and writes 100% original copy.
-  - `Stage 3`: Sam (Fact-Checker) audits and verifies all claims.
-  - `Stage 4`: Morgan (Critic) polishes cadence, strips AI tropes, and finalizes Markdown.
+  - `Stage 3`: Sam (Fact-Checker) audits and verifies all claims, including "currently open" checks via Google Maps.
+  - `Stage 4`: Morgan (Critic) polishes cadence, checks word count, strips AI tropes, verifies unique opening hook and Tier compliance.
   - `Stage 5`: Tane (Notion Publisher) stages draft in Notion (`Published: false`, `Date: null`).
 
 ---
@@ -25,18 +28,43 @@
    - Extracts hard facts: venue names, exact coordinates/addresses, prices, track lengths, historical events, signature items.
    - Strips away generic boilerplate, copied phrasing, and AI cliches found in the sources.
 
-2. **Structural Re-architecture**:
+2. **Tier Check (Before Structuring)**:
+   - Read `cities/[city-slug].md` to identify the city's Tier (1, 2, or 3).
+   - Apply Tier-appropriate structure:
+     - **Tier 1**: Full template structure, all sections, 3+ venues per category.
+     - **Tier 2**: 3–4 sections, 2–3 venues per category, merge thin sections.
+     - **Tier 3**: Collapse to 2 core sections max. 4–5 deeply described spots. Remove any section that can't be filled with verified data.
+   - Do NOT use source article's structure blindly if it was written for a different city's Tier.
+
+3. **Structural Re-architecture**:
    - Re-organizes the narrative into a superior logical flow (e.g. chronological itinerary, geographic cluster, or thematic deep dive).
    - Eliminates redundant points and synthesizes complementary information from disparate sources.
 
-3. **Total Voice Re-articulation**:
+4. **Internal Links Integration**:
+   - Use the Internal Link Map built in Stage 0 to insert contextual in-text links to related articles.
+   - Format: `[Anchor Text](/blog/[slug])` — natural in-sentence placement only, never a list.
+   - If a related place has no Notion article yet: mention by name only, add `<!-- internal-link-pending: [name] -->`.
+
+5. **Total Voice Re-articulation**:
    - Rewrites 100% of the text from scratch. Zero sentence-level similarity with the source material.
    - Injects authentic New Zealand context, Te Reo Māori concepts (*Manaakitanga, Whenua, Kaitiakitanga*), and lived experiential anchors.
 
-4. **Value-Add Expansion**:
+6. **Value-Add Expansion**:
    - Supplements the source material with critical practical nuances (e.g. cell service dropouts, seasonal wind shifts, DOC hut ticket realities).
 
----
+7. **FAQ Section (Mandatory)**:
+   - Every rewritten article MUST end with a 3–4 question FAQ section following the rules in `.antigravityrules § 0.4`.
+   - Use a warm conversational heading (never "FAQ") — adapt from the template closest to the article type:
+     - Pillar/Guide → *"Your Questions About [City Name], Answered"*
+     - Things to Do → *"Before You Go: [City Name] Quick Answers"*
+     - Food → *"Eating in [City Name]: A Few Honest Questions Answered"*
+     - Custom topic → invent a fitting heading that sounds like a local friend closing the conversation.
+   - Questions must be real search queries specific to THIS city. Answers: 50–90 words, radically honest.
+
+8. **Word Count (Adaptive)**:
+   - Target the same ranges as Track A (see `.antigravityrules § 0.3`).
+   - Shorter is acceptable for Tier 3 cities if source material was genuinely thin.
+   - Never pad to hit a number — depth over length.
 
 ## 🛡️ Anti-AI Detection Rules (Burstiness & Perplexity)
 

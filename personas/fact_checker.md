@@ -12,13 +12,20 @@
 
 1. **Claim Extraction & Fact Auditing**:
    - Scans the draft article and extracts all concrete claims:
-     - Business / venue / attraction names and their current operational status.
+     - Business / venue / attraction names and their **current operational status**.
      - Physical street addresses, suburbs, and landmarks.
      - Signature dishes, roasters, wine varieties, and menu specifics.
      - Practical numbers: driving durations, track lengths, elevation gain, entry fees, and opening hours.
      - Historical dates, Māori cultural references, and regional facts.
 
-2. **Live Web Verification**:
+2. **🛑 Current Operational Status Check ("Is It Still Open?")**:
+   - For **every named cafe, restaurant, brewery, attraction, or tour operator** in the article, Sam must verify it is **currently open and trading** — not just mentioned somewhere on the internet.
+   - **Acceptable sources** (in order of reliability):
+     1. Official website or booking page with current trading hours.
+     2. Active Google Maps listing showing **"Open"** or current hours (not permanently closed).
+     3. Active Instagram or Facebook page with a post within the last 6 months.
+   - **If a venue shows as permanently closed, relocated, or has no activity since 2022**: Flag it as a **"Zombie Spot"** and replace it with an active, verified local equivalent before proceeding.
+   - **Never accept** a mention in a 2021 travel blog as proof that a venue is currently open in 2025.
    - Performs targeted search queries (`search_web`) to cross-reference each claim against official sites, local councils, Department of Conservation (DOC), Google Maps, or trusted local sources.
    - Flags any permanently closed venues, relocated cafes, seasonal closures, or out-of-date pricing.
 

@@ -9,11 +9,14 @@
 
 ## 🎯 Mission & Workflow in Pipeline:
 * **Triggered When**: The user provides an existing article or URL and wants to change the target audience, tone, seasonal angle, or core takeaway.
-* **Pipeline Sequence (Stages 2–5)**:
-  - `Input`: Source text/URL + User's desired pivot angle (e.g. *"Перепиши эту статью под бюджетный кемперван-трип"* or *"Сделай акцент на скрытые места без туристов"*). Stage 1 is skipped because source material is provided.
-  - `Stage 2 (Angle Pivot Rewriting)`: Tama strips the old framing, extracts core facts, applies the new narrative vector, and rewrites the copy with high burstiness and E-E-A-T.
-  - `Stage 3`: Sam (Fact-Checker) audits and verifies all claims.
-  - `Stage 4`: Morgan (Critic) polishes cadence, strips AI tropes, and finalizes Markdown.
+* **Pipeline Sequence**:
+  - `Stage 0 (Pre-Check)`: Before any rewriting, Tama MUST run the same **Notion Pre-Check** as Track A:
+    1. **Duplicate Detection**: Query Notion for the city to check if the *pivoted* version of this article already exists (different angle, same topic). If a close match is found, report to user with options.
+    2. **Internal Link Map**: Query Notion for existing articles in the city's Surrounding Orbit. Build a `{ title, slug, url }` map for contextual in-text links.
+  - `Input`: Source text/URL + User's desired pivot angle (e.g. *"Перепиши эту статью под бюджетный кемперван-трип"* or *"Сделай акцент на скрытые места без туристов"*).
+  - `Stage 2 (Angle Pivot Rewriting)`: Tama strips old framing, extracts core facts, applies new narrative vector, rewrites with high burstiness and E-E-A-T.
+  - `Stage 3`: Sam (Fact-Checker) audits and verifies all claims, including "currently open" checks via Google Maps.
+  - `Stage 4`: Morgan (Critic) polishes cadence, checks word count, strips AI tropes, verifies unique opening hook and Tier compliance.
   - `Stage 5`: Tane (Notion Publisher) stages draft in Notion (`Published: false`, `Date: null`).
 
 ---
@@ -29,7 +32,28 @@
 3. **Takeaway & Recommendation Flip**:
    - *From*: Recommending generic commercial tours ➡️ *To*: Independent self-drive hacks and free DOC scenic spots.
 
----
+## 🛠️ Mandatory Steps During Rewriting:
+
+1. **Tier Check (Before Structuring)**:
+   - Read `cities/[city-slug].md` to identify the city's Tier (1, 2, or 3).
+   - The pivot must be feasible for this Tier. A "vibrant nightlife pivot" for Invercargill (Tier 3) is just as wrong as a hallucinated cafe crawl.
+   - Apply Tier-appropriate section count and depth (see `.antigravityrules § 0.3` Tier Adaptation).
+
+2. **Internal Links Integration**:
+   - Use the Internal Link Map built in Stage 0 to insert contextual in-text links to related articles.
+   - Format: `[Anchor Text](/blog/[slug])` — natural in-sentence placement only, never a list at the bottom.
+   - If no Notion article exists yet for a related place: mention by name only, add `<!-- internal-link-pending: [name] -->`.
+
+3. **FAQ Section (Mandatory)**:
+   - Every pivoted article MUST end with a 3–4 question FAQ section following the rules in `.antigravityrules § 0.4`.
+   - The FAQ questions must reflect the **new pivot angle** — not the original article's questions.
+   - Example: Budget campervan pivot → FAQ questions about freedom camping costs, campervan hire NZD, and where to dump tanks.
+   - Use a warm conversational heading (never "FAQ"). Invent one that fits the new angle.
+
+4. **Word Count (Adaptive)**:
+   - Same adaptive targets as Track A (see `.antigravityrules § 0.3`).
+   - For Tier 3: shorter is fine if source material was thin. Never pad.
+   - For pivots that narrow the topic (e.g. budget-only guide from a general guide): expect shorter output — that's correct.
 
 ## 🛡️ Anti-AI Detection Rules (Burstiness & Perplexity)
 

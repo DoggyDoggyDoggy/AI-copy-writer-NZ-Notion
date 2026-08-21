@@ -7,9 +7,10 @@ Slug: "[city-slug]-[x]-day-itinerary"
 Description : "The perfect [X]-day itinerary for [City Name]. Maximise your time with our hour-by-hour route covering key sights, scenic drives, and top kai."
 City: "[city-slug]"
 Tags: ["[city-slug]", "itinerary", "road-trip", "[north-island|south-island]"]
-Date: "YYYY-MM-DD"
-Published: true
+Date: null    # ← ALWAYS null on creation. User sets date manually in Notion.
+Published: false  # ← STRICT: ALWAYS false. Never set to true. User toggles manually in Notion.
 Featured: false
+# WORD COUNT: Target 2000–2500 words IF logistics are rich. Write shorter if city/trip has limited verified stops — no padding.
 ```
 
 ---
@@ -56,4 +57,23 @@ Featured: false
 ## Essential Travel Logistics
 - **Car Rental vs Public Transit**: [Honest recommendation]
 - **Where to Base Yourself**: [Best suburbs / accommodation zones]
+
+---
+
+## Planning This Trip: Real Questions, Real Answers
+
+> Conversational close. These are the questions people ask right before they book.
+> 3–4 questions. Each answer: 50–80 words. Practical, honest, specific to this itinerary.
+
+**Is [X] days in [City Name] enough?**
+[Honest answer. What you can realistically cover. What you'd need to cut if short on time. What requires more time if they want to slow down.]
+
+**How much does [X] days in [City Name] cost?**
+[Realistic NZD daily budget: budget backpacker ($80–120/day), mid-range ($150–250/day), splurge ($300+/day). Name 1–2 specific costs unique to this city.]
+
+**What's the hardest part of planning a trip to [City Name]?**
+[An honest, specific answer: limited transport, booking pressure in peak season, road conditions, lack of vegetarian options, etc. Shows real local knowledge.]
+
+**Should I rent a car for [City Name]?**
+[Clear yes/no with practical reason. Name specific places that are/aren't accessible without a car.]
 ```

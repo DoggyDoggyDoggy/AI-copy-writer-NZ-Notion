@@ -20,7 +20,57 @@ This document governs the 5-stage content generation, fact-checking, editorial c
 
 ---
 
-## 🎯 0.1 Interactive Persona Selection Protocol
+## 🌐 0.0 Site Architecture & URL Pattern
+
+* **Notion Database ID**: `3bbba31b-5f1a-8064-874c-f694931bfc92`
+* **Site URL Pattern**: `/blog/[slug]`
+  - Example: `/blog/auckland-travel-guide-2026`
+  - Example: `/blog/hamilton-first-timers-travel-guide`
+* **Notion is the single source of truth** for all published and draft articles. The local `articles/` folder is a convenience cache only — always query Notion for definitive article state.
+* **Internal links in articles must use this pattern**: `[Anchor Text](/blog/[slug])` using the exact `Slug` value stored in the Notion page properties.
+
+---
+
+## 🔍 Stage 0: Notion Pre-Check (Runs BEFORE Stage 0.5 Feasibility)
+
+Before running any research or writing, the pipeline **MUST** perform two Notion lookups:
+
+### Step A: Duplicate Detection
+1. Query the Notion database: `API-query-data-source` filtering by `City = [requested city]`.
+2. Retrieve all existing articles (both `Published: true` and `Published: false` drafts) for that city.
+3. Compare the requested topic/title against existing article titles and slugs for semantic similarity.
+4. **If a close match is found**, report to the user in Russian:
+   > **⚠️ Похожая статья уже есть в Notion:**
+   > - "📄 [Title]" — [Published/Черновик] — [Notion URL]
+   >
+   > **Что делаем?**
+   > 1. Написать новую статью с другим углом / другой персоной
+   > 2. Обновить / расширить уже существующую статью
+   > 3. Пропустить — статья уже покрывает эту тему
+5. **If no match**: proceed silently to Stage 0.5.
+
+### Step B: Internal Link Index
+1. Query the Notion database: `API-query-data-source` filtering by `City` values in the **Surrounding Orbit** of the requested city (from `cities/[city-slug].md` → `🚗 Surrounding Orbit (Spokes)` section).
+2. Build an **Internal Link Map**: a simple list of `{ title, slug, city }` for every article that already exists in Notion for related cities.
+3. Pass this map to Kiri (Stage 1) and the Copywriter (Stage 2) as part of the context.
+4. The Copywriter uses this map to insert contextual internal links naturally in the article body — NOT as a "Related Articles" list at the bottom.
+
+**Internal Link Formatting Rule**:
+```markdown
+# ✅ Correct — natural, in-text link:
+"Spend a morning at Hamilton Gardens, then drive 45 minutes west to [Raglan](/blog/raglan-surf-guide), 
+New Zealand's most beloved surf town."
+
+# ❌ Wrong — artificial list format:
+## Related Articles:
+- [Raglan Guide](/blog/raglan-surf-guide)
+- [Waitomo Guide](/blog/waitomo-caves-guide)
+```
+
+**If no related articles exist yet** (slug not in Notion): mention the place by name only, no broken link. Mark with `<!-- internal-link-pending: [place-name] -->` as an HTML comment so you can add the link later.
+
+---
+
 
 When the user requests an article or rewrite without explicitly specifying a persona name:
 
@@ -37,6 +87,106 @@ When the user requests an article or rewrite without explicitly specifying a per
     > 2. 🔀 **Tama (The Angle Pivot Specialist)** — Кардинальная смена ракурса и аудитории (из люкса в бюджетный кемперван, из туристических ловушек в секретные места).
 * **Exception**: If the user already named the persona in their request (e.g. *"Напиши про Гамильтон через Ароху"*), proceed immediately without extra questions.
 
+### 🧠 Persona Smart Recommendation Matrix
+When asking the user to choose a persona, **recommend** the best fit based on the topic. Use this matrix:
+
+| Topic Type | Recommended Persona | Why |
+|---|---|---|
+| City food guides, cafe trails, wine regions, Māori cultural kai, art galleries | ☕ **Aroha** | Her sensory warmth and culinary depth is perfect |
+| Hikes, Great Walks, beaches, waterfalls, surf breaks, wildlife, national parks | 🧗 **Liam** | Trail-tested ruggedness and nature accuracy |
+| Itineraries, road trips, campervans, budget hacks, family travel, multi-city routes | 🚐 **Dave** | Practical logistics and honest driving math |
+| First-Timer city pillar guides (Tier 1–2) | ☕ **Aroha** | Captures city culture, neighbourhoods, and dining |
+| First-Timer city pillar guides (Tier 3 — nature-heavy towns like Gisborne, Whāngārei) | 🧗 **Liam** | These towns' magic is outdoors, not in cafes |
+| Budget / practical guides | 🚐 **Dave** | His money-math tone is perfect for this format |
+
+> **Note**: If a topic clearly spans two personas (e.g. a food-and-hike weekend guide), recommend the dominant one and note it in the prompt to the user.
+
+---
+
+## ❓ 0.4 FAQ Section Rules (Mandatory in Every Article)
+
+Every article MUST end with a short FAQ section. But it must feel **natural to readers** — not like an SEO block bolted on at the bottom.
+
+### The Golden Rules:
+
+**1. Never call it "FAQ"**
+Use a warm, conversational heading instead. Each template has its own version:
+- Pillar Guide → *"Your Questions About [City Name], Answered"*
+- Things to Do → *"Before You Go: [City Name] Quick Answers"*
+- Food Guide → *"Eating in [City Name]: A Few Honest Questions Answered"*
+- Itinerary → *"Planning This Trip: Real Questions, Real Answers"*
+- Budget Guide → *"Budget [City Name]: Straight Answers"*
+
+**2. Questions must be real search queries**
+Write questions exactly as a human would type them into Google:
+- ✅ *"Is Queenstown worth visiting in winter?"*
+- ✅ *"Do you need a car in Invercargill?"*
+- ✅ *"How many days in Hamilton is enough?"*
+- ❌ *"What are the advantages of visiting [City Name]?"* — nobody searches this
+
+**3. Answers must be specific to THIS city**
+- ✅ *"Invercargill is significantly cheaper than Queenstown — expect to pay 30–40% less for accommodation."*
+- ❌ *"New Zealand can be expensive, but there are ways to travel on a budget."* — generic filler
+
+**4. Answer length: 50–90 words max**
+Long enough to be genuinely useful. Short enough that Google can display the full answer in a Rich Snippet accordion.
+
+**5. Tier-specific honesty in FAQ answers**
+- Tier 3 cities: answers must be radically honest (*"Invercargill doesn't have a vibrant nightlife scene — that's not why you come. You come for Burt Munro's speed machines and Bluff oysters."*)
+- Never oversell a city in the FAQ to compensate for limited content.
+
+**6. 3–4 questions per article maximum**
+More than 4 starts to feel like an SEO dump. Less than 3 doesn't give enough Google Rich Snippet surface area.
+
+---
+
+## 📝 0.3 Article Length: Quality-First, Adaptive by City & Data Density
+
+Word count is **NOT** a hardcoded minimum. The core rule across all personas:
+
+> **Write as long as the verified content honestly supports. Never pad. Never stretch. Never invent.**
+
+### Target Ranges (when real data is rich):
+| Article Type | Target Words | Notes |
+|---|---|---|
+| Pillar City Guide | 2500–3000 | Full destination; Tier 1 cities always hit this |
+| Itinerary (1–3 day) | 2000–2500 | Needs hour-by-hour logistics for each day |
+| Top X Things to Do | 1500–2000 | Each entry ~150–200 words of real detail |
+| Food & Drink Guide | 1500–2000 | Each venue needs tasting notes + practical info |
+| Budget & Practical | 1200–1800 | Hacks and logistics, not fluff |
+
+### Adaptive Rule — Shorter is Fine When:
+- The city is **Tier 3** (Invercargill, Gisborne, Whangārei, Palmerston North): fewer real venues, narrower topic. 5 deeply described spots beat 10 thin ones.
+- Kiri's Research Dossier returns limited credible data for this specific city/topic combination.
+- Expanding further would mean: adding filler transitions, restating points in different words, or inventing detail. **All of these are AI slop.** Reject them.
+
+### Adaptive Rule — Push for Full Length When:
+- The city is Tier 1 or Tier 2 with rich, verified Research Dossier data that was not fully used.
+- Sections are thin because the Copywriter rushed, not because the data was scarce.
+
+**Bottom line**: A 1100-word Invercargill article that is 100% real, honest, and specific is worth more than a 2000-word Auckland article padded with generic transitions and hollow adjectives.
+
+---
+
+## 🚦 0.2 Smart Pre-Flight City Feasibility & Reality-Check Gate (Stage 0.5)
+
+When the user asks to generate articles across multiple or all cities on a specific topic (e.g., *"Напиши статьи про ночную жизнь для всех городов"* or *"Лучшие кофейни для всех городов"*):
+
+1. **Pre-Flight Scarcity & Feasibility Scan**:
+   - Before running Stage 1 research or generating drafts, Antigravity / Kiri audits the requested topic against every target city's `Tier`, `Best Topics`, `Known Limitations` in `cities/[city-slug].md`, and live web data availability.
+2. **Feasibility Classification**:
+   - ✅ **COMPATIBLE**: Rich, genuine, verified venues and activities exist.
+   - ⚠️ **ADAPTABLE / PIVOT**: The city lacks traditional big-city versions of the topic, but has authentic regional equivalents (e.g. *"Rooftop Bars"* in Invercargill $\to$ Pivot to *"Historic Taverns & Coastal Seafood Eateries"*).
+   - ❌ **INCOMPATIBLE / DATA SCARCE**: The topic fundamentally does NOT exist or has critically scarce data in that town (e.g. *"Nightlife & Rooftop Bars"* in Invercargill/Palmerston North, or *"Black Sand Surf"* in inland Hamilton/Palmerston North).
+3. **Mandatory User Advisory / Guardrail**:
+   - When one or more cities are `INCOMPATIBLE` or `DATA SCARCE`, Antigravity **MUST NOT** force hallucinations or write generic filler.
+   - Antigravity reports the Feasibility Audit to the user in Russian:
+     > **Аудит совместимости темы с городами:**
+     > - ✅ **Города, где тема раскрывается идеально (N городов):** [Список]
+     > - ⚠️ **Города, требующие адаптации угла (N городов):** [Список + предложение адаптации]
+     > - ❌ **Несовместимые города с дефицитом данных (N городов):** [Список + честная причина, почему для этого города тема не подходит]
+   - The user is asked whether to proceed with compatible cities only or adapt the angle for outliers.
+
 ---
 
 ## 👥 1. Personas Suite
@@ -44,10 +194,10 @@ When the user requests an article or rewrite without explicitly specifying a per
 ### 🔍 Stage 1: The Researcher Persona
 Before any article is drafted, the Researcher persona runs first to gather verified, real-world data from the live internet:
 
-* **Kiri — The Live Web Scout & Deep Fact-Finder** (`personas/researcher.md`)
-  - *Role*: Mandatory Stage 1 fact-finder.
-  - *Duty*: Takes the user's specific prompt/topic (e.g. *"Лучшие кафе в Гамильтоне"*), searches the live web using search tools (`search_web`, `read_url_content`), and extracts real venue names, physical addresses, signature menu items, prices, operating hours, and local reputation.
-  - *Output*: Compiles a structured **Research Dossier** that is handed over to Stage 2.
+* **Kiri — The Live Web Scout, Ground-Truth Fact-Finder & Feasibility Gatekeeper** (`personas/researcher.md`)
+  - *Role*: Mandatory Stage 1 fact-finder and Stage 0.5 feasibility auditor.
+  - *Duty*: Takes the user's prompt/topic, verifies city feasibility, searches the live web using search tools (`search_web`, `read_url_content`), and extracts real venue names, physical addresses, signature menu items, prices, operating hours, and local reputation.
+  - *Output*: Compiles a structured **Research Dossier** handed over to Stage 2.
 
 ---
 
@@ -100,8 +250,8 @@ Immediately after copywriting or rewriting, the Fact-Checker persona validates e
 The editorial gatekeeper before database ingestion:
 
 * **Morgan — The Style Critic, Anti-Slop Editor & SEO Master** (`personas/critic.md`)
-  - *Role*: Mandatory Stage 4 editorial polish, anti-AI cleaning, and Markdown finalization.
-  - *Duty*: Strips AI cliches and buzzwords (*"nestled"*, *"tapestry"*, *"haven"*), polishes sentence rhythm and human cadence, strengthens H2/H3 hooks, validates SEO alignment, and formats the final content into pristine Markdown.
+  - *Role*: Mandatory Stage 4 editorial polish, anti-AI cleaning, Tier realism check, and Markdown finalization.
+  - *Duty*: Strips AI cliches and buzzwords (*"nestled"*, *"tapestry"*, *"haven"*), enforces burstiness and human cadence, checks Tier-appropriate honesty (rejects false metropolitan claims for Tier 3 towns and respects Queenstown's alpine orbit), strengthens H2/H3 hooks, validates SEO alignment, and formats the final content into pristine Markdown.
   - *Output*: Produces an **Editorial Polish & SEO Report** alongside the **Final Markdown Article**.
 
 ---
@@ -118,126 +268,44 @@ The safe delivery engine that stages content in Notion without triggering live s
 
 ---
 
-## ⚡ 2. Mandatory Pipeline Workflows (Track A & Track B)
+## 🏙️ 3. City Tiers & Content Balance Framework
 
-### 🚀 Track A: Writing New Articles from Scratch (5 Stages)
-Used when the user provides a topic, destination, or keyword prompt (e.g. *"Напиши гид по трекам Квинстауна"*):
-
-```
-[ User Request / Topic ] 
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 1: RESEARCH (Persona: Kiri / Researcher)          │
-│ • Run live web searches (search_web, read_url_content)  │
-│ • Extract real venues, exact addresses, signature dishes│
-│ • Output: Structured Research Dossier                   │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 2: COPYWRITING (Liam, Aroha, or Dave)             │
-│ • Ingest Research Dossier + City Profile + Template     │
-│ • Apply Burstiness & E-E-A-T rules in persona voice     │
-│ • Output: Draft Article                                 │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 3: FACT-CHECKING & VERIFICATION (Persona: Sam)    │
-│ • Audit all claims, addresses, hours, prices & routes   │
-│ • Run independent web searches to verify authenticity   │
-│ • Fix errors in place while preserving voice            │
-│ • Output: Fact-Check Report + Verified Article          │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 4: CRITIQUE & FINAL POLISH (Persona: Morgan)      │
-│ • Strip AI tropes/clichés & audit burstiness / E-E-A-T  │
-│ • Optimize H2/H3 headlines for punch and SEO intent     │
-│ • Finalize pristine, publish-ready Markdown formatting  │
-│ • Output: Editorial Report + Final Markdown Article     │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 5: SAFE NOTION INGESTION (Persona: Tane)          │
-│ • Ingest into Notion Database (ID: ...bfc92)            │
-│ • STRICT: Set Published = false (Draft) & Date = empty  │
-│ • Upload full Markdown content to Notion page           │
-│ • Output: Direct Notion Link & Staged Summary           │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-### 🔄 Track B: Rewriting Existing Articles / URLs (4 Stages: Stages 2–5)
-Used when the user provides source text, external articles, or competitor URLs (e.g. *"Вот ссылка/текст, сделай глубокий рерайт / смени угол"*):
+To eliminate hallucinations and reflect true New Zealand geography, every city is structured around realistic content balances:
 
 ```
-[ User Provides Source Text or URLs + Desired Angle ]
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 2: REWRITING (Persona: Tui or Tama)               │
-│ • Stage 1 is skipped (source text/URLs provided)        │
-│ • Deconstruct facts, eliminate duplicate phrasing       │
-│ • Rebuild 100% original copy with Burstiness & E-E-A-T  │
-│ • Output: Original Rewritten Draft                      │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 3: FACT-CHECKING & VERIFICATION (Persona: Sam)    │
-│ • Audit all claims, addresses, hours, prices & routes   │
-│ • Run independent web searches to verify authenticity   │
-│ • Fix obsolete info / closed venues in place            │
-│ • Output: Fact-Check Report + Verified Article          │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 4: CRITIQUE & FINAL POLISH (Persona: Morgan)      │
-│ • Strip AI tropes/clichés & audit burstiness / E-E-A-T  │
-│ • Optimize H2/H3 headlines for punch and SEO intent     │
-│ • Finalize pristine, publish-ready Markdown formatting  │
-│ • Output: Editorial Report + Final Markdown Article     │
-└─────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────┐
-│ STAGE 5: SAFE NOTION INGESTION (Persona: Tane)          │
-│ • Ingest into Notion Database (ID: ...bfc92)            │
-│ • STRICT: Set Published = false (Draft) & Date = empty  │
-│ • Upload full Markdown content to Notion page           │
-│ • Output: Direct Notion Link & Staged Summary           │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TIER 1A: METROPOLITAN HUBS (Auckland, Wellington, Christchurch)         │
+│ • Focus: Urban density, diverse dining scenes, distinct neighbourhoods. │
+│ • Balance: 75–80% Intra-city / 20–25% Out-of-town day trips.            │
+└─────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TIER 1B: ALPINE ADVENTURE & RESORT LAUNCHPAD (Queenstown)               │
+│ • Geography: Compact walkable resort town (20 mins end-to-end).         │
+│ • Magic: High-energy lakefront center + colossal surrounding orbit.     │
+│ • Balance: 40% Town Center & Lakefront / 60% Alpine Orbit & Excursions  │
+│   (Arrowtown, Glenorchy/Paradise, Gibbston Valley, Ski Fields, Fiords). │
+└─────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TIER 2: REGIONAL THEMATIC SPECIALISTS (Rotorua, Taupō, Tauranga, Napier,│
+│                                        Dunedin, New Plymouth, Hamilton) │
+│ • Focus: Deep regional specialization (Geothermal, Art Deco, Surf, Arts)│
+│ • Balance: 60% Regional anchors / 40% Surrounding nature.               │
+└─────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TIER 3: PROVINCIAL GATEWAYS & OUTPOST HUBS                              │
+│         (Invercargill, Palmerston North, Gisborne, Whangārei)           │
+│ • Focus: Hub-and-Spoke model (Unhurried base + epic wilderness spokes). │
+│ • Balance: 40% Town nostalgia & local staples / 60% Surrounding halo.   │
+│ • Tone: Radical Honesty (celebrate solitude, motoring, oysters, empty   │
+│         roads; DO NOT invent rooftop nightlife or hipster buzz).        │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
-
-> **Strict Rule**: In both Track A and Track B, no unverified, unedited, or unpolished AI copy may ever be delivered. Articles are never published directly to the live website without the user's manual review and toggle in Notion.
-
----
-
-## 🏙️ 3. Supported Cities (15 Profiles)
-
-Before writing about any city, load the factual profile from `cities/[city-slug].md`:
-
-1. `whangarei` — *Whangārei*: Subtropical north, Tutukaka Coast, Poor Knights Islands, waterfalls.
-2. `palmerston-north` — *Palmerston North (Te Papa-i-Oea)*: Manawatū Gorge, student cafes, wind farms.
-3. `invercargill` — *Invercargill (Waihōpai)*: Southernmost city, Bluff oysters, Southland cheese rolls, Catlins gateway.
-4. `gisborne` — *Gisborne (Tūranganui-a-Kiwa)*: First sunrise, world-class surf, Chardonnay, Rere rockslide.
-5. `new-plymouth` — *New Plymouth (Ngāmotu)*: Mt Taranaki, Len Lye kinetic art, coastal walkway, surf highway.
-6. `napier` — *Napier (Ahuriri)*: 1930s Art Deco capital, Hawke's Bay wineries, coastal cycle trails.
-7. `dunedin` — *Dunedin (Ōtepoti)*: Scottish heritage, Royal Albatross & yellow-eyed penguins, Baldwin St.
-8. `hamilton` — *Hamilton (Kirikiriroa)*: Waikato River trails, Hamilton Gardens, Hobbiton base.
-9. `taupo` — *Taupō*: Lake Taupō, Huka Falls, thermal soaking streams, Tongariro crossing gateway.
-10. `auckland` — *Auckland (Tāmaki Makaurau)*: Volcanic cones, Waiheke wine island, West Coast surf, fine dining.
-11. `christchurch` — *Christchurch (Ōtautahi)*: Garden city, Riverside Market, Port Hills, street art.
-12. `queenstown` — *Queenstown (Tāhuna)*: Adventure capital, Remarkables, Lake Wakatipu, Glenorchy, Fergburger.
-13. `rotorua` — *Rotorua*: Geothermal geysers & mud pools, living Māori villages, Redwoods biking.
-14. `wellington` — *Wellington (Te Whanganui-a-Tara)*: Coolest little capital, Te Papa, Cuba St coffee, craft beer.
-15. `tauranga` — *Tauranga & Mt Maunganui*: Mauao summit climb, surf beaches, pilot bay sunset fish & chips.
 
 ---
 
@@ -260,7 +328,7 @@ AI detectors look for mathematical predictability (low perplexity) and uniform s
 2. **High Perplexity (Unpredictable Phrasing & Natural Transitions)**:
    - Vary sentence openers: Begin with prepositional phrases (*"Tucked behind the railway tracks..."*), gerunds (*"Navigating the gravel access road..."*), conditional clauses (*"If you arrive after 10 AM..."*), or direct imperatives.
    - Never start consecutive sentences with `[Subject] + [Verb]` (e.g. *"The cafe serves... The cafe is open... The cafe offers..."*).
-   - Avoid generic "signpost" transition words (*"Furthermore"*, *"Moreover"*, *"Additionally"*, *"In conclusion"*, *"Consequently"*). Replace with conversational connectors (*"Here’s the catch:"*, *"That said,"*, *"On the flip side,"*, *"Truth be told,"*).
+   - Avoid generic "signpost" transition words (*"Furthermore"*, *"Moreover"*, *"Additionally"*, *"In conclusion"*, *"Consequently"*). Replace with conversational connectors (*"Here’s the reality:"*, *"That said,"*, *"On the flip side,"*, *"Truth be told,"*).
 
 3. **Strict AI Cliché Blacklist (Zero Tolerance)**:
    - **Banned Words/Phrases**: *nestled, tapestry, testament to, haven, beacon, embark on, delve into, boast(s), picturesque, breathtaking, myriad, seamless, look no further, whether you're a [X] or a [Y], it's important to remember, needless to say, vibrant, captivating, indulge in, treasure trove, culinary delight*.
@@ -269,8 +337,6 @@ AI detectors look for mathematical predictability (low perplexity) and uniform s
 ---
 
 ### 🏅 B. Google E-E-A-T Standards (Experience, Expertise, Authority, Trust)
-
-Google prioritizes content that demonstrates genuine human experience and critical honesty.
 
 1. **First-Hand Experience (The 1st 'E' - Experience)**:
    - Ground every section in lived human perspective (*"When you pull into the gravel car park..."*, *"I always tell visitors to skip the midday rush..."*, *"Order the flat white with their seasonal Ethiopian roast..."*).
@@ -282,17 +348,9 @@ Google prioritizes content that demonstrates genuine human experience and critic
 3. **Authoritativeness ('A')**:
    - Provide concrete, verified facts from the Stage 1 Research Dossier: exact street names, Highway numbers (SH1, SH6), exact trail distances/elevations, and realistic NZD price brackets.
 
-4. **Trustworthiness & Critical Balance (The 'T' - Trust)**:
-   - **Avoid Pure Promotional Fluff**: Real humans provide balanced critique. Always highlight trade-offs:
-     - *"The views are stunning, but the car park only holds 10 vehicles—arrive before 8:30 AM or walk an extra kilometer."*
-     - *"Skip the overpriced tourist cafe at the wharf; grab a warm steak & cheese pie from the bakery two blocks inland."*
+4. **Trustworthiness & Radical Honesty ('T' - Trust)**:
+   - **Avoid Pure Promotional Fluff**: Real humans provide balanced critique.
+   - Acknowledge local trade-offs:
+     - *"Let's be clear: Queenstown CBD is just a 20-minute walk from end to end; the real adventure lies in hiring a car to explore Arrowtown, Glenorchy, and the Gibbston wine trail."*
+     - *"The car park only holds 10 vehicles—arrive before 8:30 AM or walk an extra kilometer."*
      - *"Mobile reception drops out completely 4 km past the river crossing; download offline maps in advance."*
-
----
-
-### 🎭 C. Personality-Driven Implementation
-
-While obeying all anti-detection and E-E-A-T rules above, each copywriter channels them through their individual persona:
-* **Liam**: Delivers E-E-A-T via trail-tested gear warnings, weather realities, and rugged wilderness grit.
-* **Aroha**: Delivers E-E-A-T via nuanced tasting notes, architectural appreciation, and deep Māori cultural respect.
-* **Dave**: Delivers E-E-A-T via honest budget breakdowns, realistic driving math, parking hacks, and family logistics.

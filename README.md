@@ -7,9 +7,10 @@ A modular, multi-persona AI content engine for researching, drafting, rewriting,
 ## 📁 Repository Structure
 
 ```
-├── .antigravityrules              # Core instructions, standards, and 4-stage pipeline
+├── .antigravityrules              # Core instructions, standards, and 6-stage pipeline
+├── .env.example                   # Environment variable template (copy to .env)
 ├── README.md                      # System manual & operational guide
-├── personas/                      # Complete 5-Stage Personas Suite
+├── personas/                      # Complete 6-Stage Personas Suite
 │   ├── researcher.md                    # Stage 1: Kiri (Live web scout & deep fact-finder)
 │   ├── copywriter_local_explorer.md     # Stage 2: Liam (Hikes, nature, outdoor adrenaline)
 │   ├── copywriter_urban_foodie.md       # Stage 2: Aroha (Dining, coffee, art, culture)
@@ -18,7 +19,14 @@ A modular, multi-persona AI content engine for researching, drafting, rewriting,
 │   ├── rewriter_angle_pivot.md          # Stage 2: Tama (Angle/vector/conclusion pivot)
 │   ├── fact_checker.md                  # Stage 3: Sam (Ground-truth auditor & verifier)
 │   ├── critic.md                        # Stage 4: Morgan (Style critic, anti-slop & SEO editor)
-│   └── notion_publisher.md              # Stage 5: Tane (Safe Notion database draft ingestion)
+│   ├── notion_publisher.md              # Stage 5: Tane (Safe Notion database draft ingestion)
+│   └── image_designer.md               # Stage 6: Maia (Visual designer & cover image generator)
+├── scripts/                       # Image generation scripts & ComfyUI workflows
+│   ├── generate_image.py                # Main image generation + Cloudinary upload script
+│   ├── comfyui_setup.md                 # Step-by-step ComfyUI setup guide
+│   └── comfyui_workflows/
+│       ├── sdxl_turbo_flat_editorial.json  # Workflow: Flat Editorial style
+│       └── sdxl_turbo_risograph.json       # Workflow: Risograph print style
 ├── templates/                     # Dynamic templates per content format
 │   ├── article_schema.md                # Schema overview & dynamic metadata rules
 │   ├── pillar_guide.md                  # Comprehensive City Pillar Guide
@@ -91,6 +99,11 @@ A modular, multi-persona AI content engine for researching, drafting, rewriting,
 | Persona | Name | Role | Capabilities |
 |---|---|---|---|
 | **Notion Publisher** | **Tane** | Safe Database Ingestion Engine | Creates new draft entries in Notion (`database_id: 3bbba31b...bfc92`), populates properties, sets `Published: false` & `Date: empty` for safe staging, and uploads full Markdown. |
+
+### 🎨 Stage 6: Visual Designer Persona
+| Persona | Name | Role | Capabilities |
+|---|---|---|---|
+| **Visual Designer** | **Maia** | Cover Image Generator | Reads the finished article, extracts visual themes, builds a brand-locked prompt (2 styles: Flat Editorial / Risograph), generates 1024×1024 PNG locally via ComfyUI + SDXL-Turbo, uploads to Cloudinary, and patches the Notion page cover with the URL. Palette locked to Sage (#4A7C72) + Terracotta (#C4623A). Zero photorealism, zero landmarks, zero faces. |
 
 ---
 

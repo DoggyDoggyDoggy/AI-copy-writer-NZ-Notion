@@ -98,23 +98,25 @@ FORMAT:     1024×1024, PNG
 ### Style A: Flat Editorial
 
 ```
-Flat editorial travel poster illustration. [ARTICLE_TITLE] in New Zealand.
-Minimal geometric shapes, bold silhouettes, layered flat composition.
-Color palette strictly: sage green (#4A7C72), terracotta (#C4623A), warm cream (#F5EDD6).
-No photorealism, no faces, no text, no recognisable landmarks.
-Style: Monocle magazine cover, vintage airline poster, mid-century modern graphic design.
-Subjects: [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
+Flat editorial travel poster. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
+New Zealand. Minimal geometric shapes, bold flat silhouettes.
+Sage green, terracotta, warm cream palette.
+Mid-century modern, vintage airline poster, Monocle style.
+No faces, no text, no landmarks, no photorealism.
 ```
+
+> **Token limit**: CLIP caps at 77 tokens. Keep prompts SHORT — subjects first, style second. The template above is ~60 tokens.
 
 ### Style B: Risograph
 
 ```
-Risograph print style illustration. [ARTICLE_TITLE] in New Zealand.
-Two-color screen print aesthetic, grain texture, slight misregistration effect, halftone dots.
-Colors strictly: teal (#4A7C72) and terracotta (#C4623A) on warm cream (#F5EDD6) background.
-No photorealism, no people, no text, no recognisable landmarks.
-Subjects: [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
+Risograph screen print illustration. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
+New Zealand. Two-color print, grain texture, halftone dots, misregistration.
+Teal and terracotta on cream background.
+No faces, no text, no landmarks, no photorealism.
 ```
+
+> **Token limit**: same rule — keep subjects at the front, they matter most.
 
 ---
 
@@ -136,9 +138,9 @@ When reading the article, look for:
 
 ---
 
-## ⚙️ ComfyUI API — How to Call
+## ⚙️ How to Call the Script
 
-Maia calls the Python script which handles all ComfyUI communication:
+Maia calls the Python script directly (no ComfyUI needed):
 
 ```bash
 python scripts/generate_image.py \

@@ -125,9 +125,9 @@ def generate_image(style: str, prompt: str, slug: str) -> Path:
     )
     pipe = pipe.to(device)
 
-    # Memory optimization for 8-10 GB VRAM cards
-    if device == "cuda":
-        pipe.enable_attention_slicing()
+    # NOTE: Do NOT call pipe.enable_attention_slicing() on RTX 3070 8GB —
+    # it paradoxically slows SDXL-Turbo. 8GB VRAM is sufficient without it.
+    # Only enable if you have 4GB or less VRAM and get OOM errors.
 
     print("[...] Generating (SDXL-Turbo: 4 steps, ~5-15 sec on GPU)...")
 
@@ -165,7 +165,7 @@ def generate_image(style: str, prompt: str, slug: str) -> Path:
 
 def upload_to_cloudinary(image_path: Path, slug: str) -> str:
     """
-    Upload image to Cloudinary using signed upload.
+    Upload image to Cloudinary using the official Python SDK.
     Returns the secure_url of the uploaded image.
     """
     if not CLOUDINARY_CLOUD or not CLOUDINARY_KEY or not CLOUDINARY_SEC:
@@ -175,59 +175,32 @@ def upload_to_cloudinary(image_path: Path, slug: str) -> str:
             "CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET"
         )
 
-    timestamp  = str(int(time.time()))
-    public_id  = f"nz-travel/{slug}"
+    try:
+        import cloudinary
+        import cloudinary.uploader
+    except ImportError:
+        print("[ERR] cloudinary not installed: pip install cloudinary")
+        sys.exit(1)
 
-    # Build Cloudinary signature
-    params_to_sign = f"public_id={public_id}&timestamp={timestamp}"
-    signature = hashlib.sha1(
-        (params_to_sign + CLOUDINARY_SEC).encode()
-    ).hexdigest()
-
-    # Read image bytes
-    with open(image_path, "rb") as f:
-        image_data = f.read()
-
-    # Build multipart form body manually (no requests lib needed)
-    boundary = "----MaiaFormBoundary" + uuid.uuid4().hex
-    body_parts = []
-
-    def add_field(name: str, value: str):
-        body_parts.append(
-            f"--{boundary}\r\n"
-            f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
-            f"{value}\r\n"
+    # Support both CLOUDINARY_URL (from dashboard) and individual vars
+    cloudinary_url = os.environ.get("CLOUDINARY_URL", "")
+    if cloudinary_url:
+        # SDK auto-configures from CLOUDINARY_URL env var
+        cloudinary.config(cloudinary_url=cloudinary_url)
+    else:
+        cloudinary.config(
+            cloud_name = CLOUDINARY_CLOUD,
+            api_key    = CLOUDINARY_KEY,
+            api_secret = CLOUDINARY_SEC,
+            secure     = True
         )
 
-    add_field("api_key",   CLOUDINARY_KEY)
-    add_field("timestamp", timestamp)
-    add_field("signature", signature)
-    add_field("public_id", public_id)
-    add_field("overwrite", "true")
-
-    # File field
-    body_parts.append(
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="file"; filename="{image_path.name}"\r\n'
-        f"Content-Type: image/png\r\n\r\n"
+    result = cloudinary.uploader.upload(
+        str(image_path),
+        public_id = f"nz-travel/{slug}",
+        overwrite = True,
+        folder    = "nz-travel",
     )
-
-    body = (
-        "".join(body_parts).encode()
-        + image_data
-        + f"\r\n--{boundary}--\r\n".encode()
-    )
-
-    upload_url = f"https://api.cloudinary.com/v1_1/{CLOUDINARY_CLOUD}/image/upload"
-    req = urllib.request.Request(
-        upload_url,
-        data=body,
-        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=60) as r:
-        result = json.loads(r.read())
-
     return result["secure_url"]
 
 

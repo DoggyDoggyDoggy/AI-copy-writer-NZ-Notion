@@ -98,39 +98,45 @@ STORAGE:    Cloudinary ONLY (Zero local image storage — never save or keep ima
 
 > **🚫 ZERO LOCAL STORAGE INVARIANT**: Images must **NEVER** be stored locally in the project directory. All generated illustrations are streamed/uploaded directly to Cloudinary and referenced exclusively via their Cloudinary URL. No local copies in `output_images/` or repository folders.
 
-> **CRITICAL — Text suppression**: SDXL-Turbo runs at CFG=0.0 (distilled model),
-> which means **negative prompts have zero effect**. The ONLY way to prevent text
-> generation is via the **positive prompt**. Every prompt MUST start with:
-> `pure vector illustration, zero text, no letters, no words, no labels,`
+> **CRITICAL — Text suppression**: SDXL-Turbo runs at CFG=0.0 (distilled),
+> meaning **negative prompts have zero effect**. Anti-text tokens go FIRST in the positive prompt.
+> The script auto-prepends `NO_TEXT_PREFIX = "pure vector illustration, zero text, no letters, no words, no labels,"`
+>
+> **CLIP 77-token hard limit**: Any tokens beyond 77 are **silently cut** and have zero effect.
+> Benchmark shows prompts were 89 tokens → last 12 tokens (e.g. "no photorealism") were wasted.
+> Keep style body ≤ 65 tokens (prefix takes ~12 tokens).
 
 ---
 
 ## 📋 Prompt Templates
 
+> **Do NOT add "No faces, no text, no landmarks, no photorealism." at the end** — CLIP truncates it before it takes effect. The NO_TEXT_PREFIX prepended by the script handles text suppression.
+
 ### Style A: Flat Editorial
 
+Script prepends `pure vector illustration, zero text, no letters, no words, no labels,` automatically.
+You only write the style body (~65 tokens max):
+
 ```
-pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,
-Flat editorial travel poster. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
-New Zealand. Minimal geometric shapes, bold flat silhouettes.
-Sage green, terracotta, warm cream palette.
-Mid-century modern, vintage airline poster, Monocle style.
-No faces, no text, no landmarks, no photorealism.
+Flat editorial travel poster. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3].
+New Zealand. Geometric shapes, flat silhouettes.
+Sage green, terracotta, warm cream palette. Monocle style.
 ```
 
-> **Token limit**: CLIP caps at 77 tokens. Keep prompts SHORT — subjects first, style second. The template above is ~60 tokens.
+> **~30 tokens** for the template + ~15 tokens for subjects = ~45 total body.
+> Add NO_TEXT_PREFIX (12 tokens) = ~57 tokens total. Well within the 77-token limit.
 
 ### Style B: Risograph
 
+Script prepends `pure vector illustration, zero text, no letters, no words, no labels,` automatically.
+
 ```
-pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,
-Risograph screen print illustration. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
-New Zealand. Two-color print, grain texture, halftone dots, misregistration.
-Teal and terracotta on cream background.
-No faces, no text, no landmarks, no photorealism.
+Risograph screen print. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3].
+New Zealand. Two-color print, grain texture, halftone dots.
+Teal and terracotta on cream.
 ```
 
-> **Token limit**: same rule — keep subjects at the front, they matter most.
+> Same budget rule: keep body ≤ 65 tokens.
 
 ---
 

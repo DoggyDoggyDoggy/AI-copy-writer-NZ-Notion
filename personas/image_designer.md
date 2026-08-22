@@ -112,21 +112,23 @@ STORAGE:    Cloudinary ONLY (Zero local image storage — never save or keep ima
 
 > **Do NOT add "No faces, no text, no landmarks, no photorealism." at the end** — CLIP truncates it before it takes effect. The NO_TEXT_PREFIX prepended by the script handles text suppression.
 
-### Style A: Flat Editorial
+### Style A: Flat Editorial (SAFE — no poster/magazine keywords)
 
 Script prepends `pure vector illustration, zero text, no letters, no words, no labels,` automatically.
 You only write the style body (~65 tokens max):
 
 ```
-Flat editorial travel poster. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3].
+Flat vector illustration. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3].
 New Zealand. Geometric shapes, flat silhouettes.
-Sage green, terracotta, warm cream palette. Monocle style.
+Sage green, terracotta, warm cream.
 ```
 
-> **~30 tokens** for the template + ~15 tokens for subjects = ~45 total body.
-> Add NO_TEXT_PREFIX (12 tokens) = ~57 tokens total. Well within the 77-token limit.
+> ❌ **NEVER USE** these words — they trigger poster-title text generation in SDXL:
+> `travel poster`, `airline poster`, `vintage poster`, `Monocle style`, `editorial poster`
+>
+> ✅ **USE INSTEAD**: `flat vector illustration`, `flat graphic art`, `minimalist illustration`
 
-### Style B: Risograph
+### Style B: Risograph (SAFE — screen print keywords don't trigger text)
 
 Script prepends `pure vector illustration, zero text, no letters, no words, no labels,` automatically.
 
@@ -136,7 +138,7 @@ New Zealand. Two-color print, grain texture, halftone dots.
 Teal and terracotta on cream.
 ```
 
-> Same budget rule: keep body ≤ 65 tokens.
+> Risograph style is safer than poster style — "screen print" doesn't correlate with bottom-title text in training data.
 
 ---
 

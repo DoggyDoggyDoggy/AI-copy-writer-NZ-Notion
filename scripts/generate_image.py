@@ -116,53 +116,61 @@ def check_gpu() -> str:
 
 def detect_text_in_image(image) -> bool:
     """
-    Lightweight heuristic text detection using PIL pixel analysis.
-    Looks for sharp high-contrast horizontal bands — the signature pattern
-    of rasterised text hallucinated by SDXL.
+    Pixel-based text detection covering the FULL image.
 
-    Returns True if text is likely present → triggers auto-retry.
+    Two scanning zones with different sensitivity:
+      - Bottom 20% of image: HIGH sensitivity (poster titles appear here - e.g. "HARBOUYLE")
+      - Full image scan:     NORMAL sensitivity (mid-image captions, watermarks)
 
-    No external dependencies needed (uses only PIL which diffusers already requires).
-    Accuracy: catches ~80% of SDXL text artifacts.
+    Returns True if text is likely present -> triggers auto-retry.
+
+    Root cause of travel-poster text: SDXL's training data contains vintage travel
+    posters with titles at the bottom. "Monocle style" / "airline poster" prompts
+    reliably trigger this. Detection must cover the bottom zone.
     """
     try:
         gray = image.convert("L")
         width, height = gray.size
+        strip_h = max(height // 16, 6)
 
-        # Analyse the middle third of the image (text is most common there)
-        strip_h = max(height // 12, 8)
-        y_start = height // 3
-        y_end   = (height * 2) // 3
-
-        suspicious = 0
-        total      = 0
-
-        for y in range(y_start, y_end, strip_h):
-            strip  = gray.crop((0, y, width, min(y + strip_h, height)))
-            pixels = list(strip.getdata())
-            if not pixels:
-                continue
-            total += 1
-
-            dark_ratio   = sum(1 for p in pixels if p < 40)  / len(pixels)
-            bright_ratio = sum(1 for p in pixels if p > 215) / len(pixels)
-
-            # High dark + high bright in the same strip = text-like pattern
-            if dark_ratio > 0.06 and bright_ratio > 0.25:
-                suspicious += 1
-
-        if total == 0:
+        def scan_zone(y_from: int, y_to: int, dark_thresh: float, bright_thresh: float, rate_thresh: float) -> bool:
+            suspicious = 0
+            total = 0
+            for y in range(y_from, y_to, strip_h):
+                strip = gray.crop((0, y, width, min(y + strip_h, y_to)))
+                pixels = list(strip.getdata())
+                if not pixels:
+                    continue
+                total += 1
+                dark_ratio   = sum(1 for p in pixels if p < 50)  / len(pixels)
+                bright_ratio = sum(1 for p in pixels if p > 200) / len(pixels)
+                if dark_ratio > dark_thresh and bright_ratio > bright_thresh:
+                    suspicious += 1
+            if total == 0:
+                return False
+            rate = suspicious / total
+            if rate >= rate_thresh:
+                print(f"   [TEXT DETECTED] {suspicious}/{total} strips suspicious ({rate:.0%})")
+                return True
             return False
 
-        rate = suspicious / total
-        if rate >= 0.30:
-            print(f"   [⚠️  TEXT DETECTED] {suspicious}/{total} strips suspicious "
-                  f"({rate:.0%}) — will retry with new seed...")
+        # Zone 1: Bottom 20% — HIGH sensitivity (poster/title text lives here)
+        bottom_start = int(height * 0.80)
+        if scan_zone(bottom_start, height,
+                     dark_thresh=0.03, bright_thresh=0.15, rate_thresh=0.20):
             return True
+
+        # Zone 2: Full image — NORMAL sensitivity (mid-image captions, watermarks)
+        if scan_zone(0, height,
+                     dark_thresh=0.06, bright_thresh=0.25, rate_thresh=0.30):
+            return True
+
         return False
 
     except Exception as e:
         print(f"   [WARN] Text detection skipped ({e})")
+        return False
+
         return False
 
 

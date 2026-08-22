@@ -91,34 +91,41 @@ NO_TEXT_PREFIX = (
 
 def detect_text_in_image(image) -> bool:
     """
-    Lightweight heuristic: looks for sharp high-contrast horizontal bands
-    (signature pattern of SDXL text hallucinations).
-    Returns True → triggers auto-retry.
+    Pixel-based text detection covering the FULL image.
+    Two zones: bottom 20% (high sensitivity) + full image (normal).
+    Returns True -> triggers auto-retry.
     """
     try:
         gray = image.convert("L")
         width, height = gray.size
-        strip_h = max(height // 12, 8)
-        y_start = height // 3
-        y_end   = (height * 2) // 3
-        suspicious = 0
-        total      = 0
-        for y in range(y_start, y_end, strip_h):
-            strip  = gray.crop((0, y, width, min(y + strip_h, height)))
-            pixels = list(strip.getdata())
-            if not pixels:
-                continue
-            total += 1
-            dark_ratio   = sum(1 for p in pixels if p < 40)  / len(pixels)
-            bright_ratio = sum(1 for p in pixels if p > 215) / len(pixels)
-            if dark_ratio > 0.06 and bright_ratio > 0.25:
-                suspicious += 1
-        if total == 0:
+        strip_h = max(height // 16, 6)
+
+        def scan_zone(y_from, y_to, dark_thresh, bright_thresh, rate_thresh):
+            suspicious = 0
+            total = 0
+            for y in range(y_from, y_to, strip_h):
+                strip = gray.crop((0, y, width, min(y + strip_h, y_to)))
+                pixels = list(strip.getdata())
+                if not pixels:
+                    continue
+                total += 1
+                dark_ratio   = sum(1 for p in pixels if p < 50)  / len(pixels)
+                bright_ratio = sum(1 for p in pixels if p > 200) / len(pixels)
+                if dark_ratio > dark_thresh and bright_ratio > bright_thresh:
+                    suspicious += 1
+            if total == 0:
+                return False
+            rate = suspicious / total
+            if rate >= rate_thresh:
+                print(f"   [TEXT DETECTED] {suspicious}/{total} strips suspicious ({rate:.0%}) -- retrying...")
+                return True
             return False
-        rate = suspicious / total
-        if rate >= 0.30:
-            print(f"   [⚠️  TEXT DETECTED] {suspicious}/{total} strips suspicious "
-                  f"({rate:.0%}) — retrying...")
+
+        # Zone 1: Bottom 20% -- HIGH sensitivity (poster title text lives here)
+        if scan_zone(int(height * 0.80), height, 0.03, 0.15, 0.20):
+            return True
+        # Zone 2: Full image -- NORMAL sensitivity
+        if scan_zone(0, height, 0.06, 0.25, 0.30):
             return True
         return False
     except Exception as e:

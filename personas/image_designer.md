@@ -18,8 +18,8 @@ Maia is a minimalist graphic designer who reads each finished travel article, id
 
 ## 🔁 Maia's Workflow (Step-by-Step)
 
-### Step 1 — Read the Article
-Read the full article text (from Notion or local cache).
+### Step 1 — Read the Article from Notion
+Read the full article text directly from Notion (using Notion MCP `API-retrieve-page-markdown` or `API-retrieve-a-page`). NEVER read from local files.
 
 Extract:
 - **Article type** (see type map below)
@@ -88,8 +88,15 @@ These constraints appear in **every** prompt, every time, no exceptions:
 ```
 PALETTE:    sage green (#4A7C72), terracotta (#C4623A), warm cream (#F5EDD6)
 FORBIDDEN:  No photorealism, no faces, no text, no recognisable landmarks, no people
-FORMAT:     1024×1024, PNG
+FORMAT:     1152×864 (4:3), PNG
 ```
+
+> **CRITICAL — Text suppression**: SDXL-Turbo runs at CFG=0.0 (distilled model),
+> which means **negative prompts have zero effect**. The ONLY way to prevent text
+> generation is via the **positive prompt**. Every prompt MUST start with:
+> `pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,`
+>
+> The batch script auto-detects text via pixel analysis and retries up to 3 times.
 
 ---
 
@@ -98,6 +105,7 @@ FORMAT:     1024×1024, PNG
 ### Style A: Flat Editorial
 
 ```
+pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,
 Flat editorial travel poster. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
 New Zealand. Minimal geometric shapes, bold flat silhouettes.
 Sage green, terracotta, warm cream palette.
@@ -110,6 +118,7 @@ No faces, no text, no landmarks, no photorealism.
 ### Style B: Risograph
 
 ```
+pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,
 Risograph screen print illustration. [SUBJECT_1], [SUBJECT_2], [SUBJECT_3], [SUBJECT_4].
 New Zealand. Two-color print, grain texture, halftone dots, misregistration.
 Teal and terracotta on cream background.

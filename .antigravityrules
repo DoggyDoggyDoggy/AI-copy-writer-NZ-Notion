@@ -26,7 +26,8 @@ This document governs the 5-stage content generation, fact-checking, editorial c
 * **Site URL Pattern**: `/blog/[slug]`
   - Example: `/blog/auckland-travel-guide-2026`
   - Example: `/blog/hamilton-first-timers-travel-guide`
-* **Notion is the single source of truth** for all published and draft articles. The local `articles/` folder is a convenience cache only — always query Notion for definitive article state.
+* **Notion is the SOLE AND EXCLUSIVE source of truth** for all articles, drafts, and metadata.
+* **FORBIDDEN**: Never read, scan, or use local `articles/` files as source material or truth. The pipeline and all agents (Maia, Kiri, Copywriters, Sam, Morgan, Tane) must fetch live article data directly from Notion via Notion MCP (`API-post-search`, `API-retrieve-a-page`, `API-retrieve-page-markdown`, `API-query-data-source`).
 * **Internal links in articles must use this pattern**: `[Anchor Text](/blog/[slug])` using the exact `Slug` value stored in the Notion page properties.
 
 ---
@@ -273,13 +274,15 @@ Runs automatically after Stage 5. Reads the finished article, generates a brand-
 
 * **Maia — The Visual Designer & Illustrator** (`personas/image_designer.md`)
   - *Role*: Mandatory Stage 6 cover image generation & delivery.
-  - *Engine*: **SDXL-Turbo via diffusers** (runs locally, no external tools needed, 1024×1024, ~5-15 sec/image on RTX 3070).
+  - *Engine*: **SDXL-Turbo via diffusers** (runs locally, no external tools needed, 1152×864 (4:3), ~5-10 sec/image on RTX 3070).
   - *First Run*: Model auto-downloads from HuggingFace (~6.9 GB, cached permanently after that).
-  - *Duty*: Reads the final article text, extracts 3–5 illustratable visual themes (NO landmarks, NO faces, NO text), selects style based on article type, assembles the prompt using a brand-locked template, generates locally, shows preview for approval, uploads to Cloudinary, and patches the Notion page cover with the URL.
+  - *Duty*: Reads the final article text, extracts 3–5 illustratable visual themes (NO landmarks, NO faces, NO text), selects style based on article type, assembles the prompt using a brand-locked template (with NO_TEXT_PREFIX at the start), generates locally with auto-retry (up to 3x if text detected in image), shows preview for approval, uploads to Cloudinary, and patches the Notion page cover with the URL.
   - *Critical Safety Rules*:
     - **NEVER** generate recognisable NZ landmarks (Sky Tower, Milford Sound, Hobbiton, etc.)
     - **NEVER** generate human faces, bodies, or identifiable people
     - **NEVER** include text or typography in the image
+    - **Text Guard**: SDXL-Turbo at CFG=0.0 ignores negative prompts — all prompts MUST start with `pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,`
+    - **Auto-Retry**: batch script detects text via pixel analysis and retries up to 3 times with new seeds
     - **ALWAYS** use the locked palette: sage green (#4A7C72), terracotta (#C4623A), warm cream (#F5EDD6)
     - **ALWAYS** show prompt to user and request approval before generating
   - *Style Routing*:

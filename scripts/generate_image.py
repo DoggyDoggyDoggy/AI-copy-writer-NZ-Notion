@@ -317,10 +317,16 @@ def upload_to_cloudinary(image_path: Path, slug: str) -> str:
     return result["secure_url"]
 
 
-def upload_image(image_path: Path, slug: str) -> str:
+def upload_image(image_path: Path, slug: str, auto_delete: bool = True) -> str:
     print(f"\n[...] Uploading to Cloudinary...")
     url = upload_to_cloudinary(image_path, slug)
     print(f"[OK] Cloudinary URL: {url}")
+    if auto_delete and image_path.exists():
+        try:
+            image_path.unlink()
+            print(f"[CLEANUP] Local temporary file removed: {image_path.name}")
+        except Exception as e:
+            print(f"[WARN] Failed to delete local temp file: {e}")
     return url
 
 
@@ -343,6 +349,10 @@ def main():
         help="Path to existing image to upload to Cloudinary (skips generation)"
     )
     parser.add_argument(
+        "--keep-local", action="store_true",
+        help="Keep local file after Cloudinary upload (by default, local file is deleted)"
+    )
+    parser.add_argument(
         "--check", action="store_true",
         help="Check GPU availability and exit"
     )
@@ -357,7 +367,7 @@ def main():
         if not args.slug:
             print("[ERR] Specify --slug for upload")
             sys.exit(1)
-        url = upload_image(Path(args.upload), args.slug)
+        url = upload_image(Path(args.upload), args.slug, auto_delete=not args.keep_local)
         print(f"\n[URL] Use this in Notion: {url}")
         sys.exit(0)
 
@@ -366,11 +376,11 @@ def main():
         sys.exit(1)
 
     image_path = generate_image(args.style, args.prompt, args.slug)
-    url        = upload_image(image_path, args.slug)
+    url        = upload_image(image_path, args.slug, auto_delete=not args.keep_local)
 
     print(f"\n[DONE]")
-    print(f"   Local file     : {image_path}")
     print(f"   Cloudinary URL : {url}")
+    print(f"   Local status   : {'Kept on disk' if args.keep_local else 'Deleted (Cloudinary only)'}")
     print(f"\n   Paste this URL into Notion as Cover Image:")
     print(f"   {url}")
 

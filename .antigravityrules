@@ -280,8 +280,8 @@ Runs automatically after Stage 5. Reads the finished article, generates a brand-
   - *Critical Safety Rules*:
     - **NEVER** generate recognisable NZ landmarks (Sky Tower, Milford Sound, Hobbiton, etc.)
     - **NEVER** generate human faces, bodies, or identifiable people
-    - **NEVER** include text or typography in the image
-    - **Text Guard**: SDXL-Turbo at CFG=0.0 ignores negative prompts — all prompts MUST start with `pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,`
+    - **NEVER store images locally (Auto-Cleanup Lifecycle)**: Local files exist only temporarily during generation. As soon as the image is uploaded to Cloudinary and written to Notion, the local file is **immediately deleted**. No residual image files remain on disk. All assets live exclusively on Cloudinary (`https://res.cloudinary.com/...`).
+    - **Text Guard**: SDXL-Turbo at CFG=0.0 ignores negative prompts — all prompts MUST start with `pure vector illustration, zero text, no letters, no words, no labels,`
     - **Auto-Retry**: batch script detects text via pixel analysis and retries up to 3 times with new seeds
     - **ALWAYS** use the locked palette: sage green (#4A7C72), terracotta (#C4623A), warm cream (#F5EDD6)
     - **ALWAYS** show prompt to user and request approval before generating
@@ -289,7 +289,7 @@ Runs automatically after Stage 5. Reads the finished article, generates a brand-
     - **Flat Editorial** (Monocle/airline poster style): city overviews, budget guides, itineraries, accommodation
     - **Risograph** (screen-print style): food/cafe articles, hiking/nature, culture/Māori
   - *Output*: Cloudinary URL + Notion cover updated + preview shown to user.
-  - *Storage*: Cloudinary (free tier, 25 GB — enough for thousands of images).
+  - *Storage*: **Cloudinary SOLE & EXCLUSIVE** (Zero local disk storage. All assets live on Cloudinary).
 
 ---
 

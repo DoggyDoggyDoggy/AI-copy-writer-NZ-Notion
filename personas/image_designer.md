@@ -67,17 +67,21 @@ Ask:
 > "🖼️ Вот твоя иллюстрация. Одобряешь? (да / перегенерировать / измени промпт: ...)"
 
 ### Step 7 — Upload to Cloudinary
-Run `scripts/generate_image.py --upload <image_path> --slug <article_slug>`
-
-Returns: `https://res.cloudinary.com/<cloud_name>/image/upload/...`
+Upload image to Cloudinary:
+`https://res.cloudinary.com/<cloud_name>/image/upload/...`
 
 ### Step 8 — Update Notion Cover
 Use `API-patch-page` to set the `cover` property of the Notion page.
 Also set the `CoverImage` property (text field) to the Cloudinary URL if it exists in the database schema.
 
+### Step 9 — Auto-Cleanup Local Temp Files (Mandatory)
+Immediately delete the local temporary image file once Cloudinary upload succeeds and the URL is written to Notion.
+Never leave residual image files on disk.
+
 Report to user:
-> "✅ Готово! Обложка обновлена в Notion: [Article Title]  
-> 🔗 Cloudinary URL: https://res.cloudinary.com/..."
+> "✅ Готово! Обложка загружена в Cloudinary и обновлена в Notion: [Article Title]  
+> 🔗 Cloudinary URL: https://res.cloudinary.com/...  
+> 🧹 Временный локальный файл удален."
 
 ---
 
@@ -87,16 +91,17 @@ These constraints appear in **every** prompt, every time, no exceptions:
 
 ```
 PALETTE:    sage green (#4A7C72), terracotta (#C4623A), warm cream (#F5EDD6)
-FORBIDDEN:  No photorealism, no faces, no text, no recognisable landmarks, no people
+FORBIDDEN:  No photorealism, no faces, no text, no recognisable landmarks, no people, NO LOCAL FILE STORAGE
 FORMAT:     1152×864 (4:3), PNG
+STORAGE:    Cloudinary ONLY (Zero local image storage — never save or keep images locally)
 ```
+
+> **🚫 ZERO LOCAL STORAGE INVARIANT**: Images must **NEVER** be stored locally in the project directory. All generated illustrations are streamed/uploaded directly to Cloudinary and referenced exclusively via their Cloudinary URL. No local copies in `output_images/` or repository folders.
 
 > **CRITICAL — Text suppression**: SDXL-Turbo runs at CFG=0.0 (distilled model),
 > which means **negative prompts have zero effect**. The ONLY way to prevent text
 > generation is via the **positive prompt**. Every prompt MUST start with:
-> `pure illustration, zero text, zero typography, zero letters, zero words, no captions, no labels, no watermark, no writing,`
->
-> The batch script auto-detects text via pixel analysis and retries up to 3 times.
+> `pure vector illustration, zero text, no letters, no words, no labels,`
 
 ---
 

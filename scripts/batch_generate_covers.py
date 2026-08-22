@@ -253,7 +253,6 @@ def main():
             cloudinary_url = results[page_id]["cloudinary_url"]
             print(f"   [INFO] Already uploaded: {cloudinary_url}", flush=True)
         else:
-            print(f"   [☁️] Uploading to Cloudinary...", flush=True)
             upload_res = cloudinary.uploader.upload(
                 str(image_path),
                 public_id=f"nz-travel/{slug}",
@@ -264,6 +263,14 @@ def main():
             print(f"   [OK] Cloudinary URL: {cloudinary_url}", flush=True)
             count_uploaded += 1
 
+            # Auto-cleanup: remove local temp file immediately after Cloudinary upload
+            if image_path.exists():
+                try:
+                    image_path.unlink()
+                    print(f"   [CLEANUP] Deleted local temporary file: {image_path.name}", flush=True)
+                except Exception as e:
+                    print(f"   [WARN] Could not delete local temp file: {e}", flush=True)
+
         results[page_id] = {
             "id": page_id,
             "city": city,
@@ -271,7 +278,6 @@ def main():
             "slug": slug,
             "style": style,
             "prompt": prompt,
-            "image_path": str(image_path),
             "cloudinary_url": cloudinary_url,
             "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")
         }

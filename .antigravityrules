@@ -273,8 +273,8 @@ Runs automatically after Stage 5. Reads the finished article, generates a brand-
 
 * **Maia — The Visual Designer & Illustrator** (`personas/image_designer.md`)
   - *Role*: Mandatory Stage 6 cover image generation & delivery.
-  - *Engine*: ComfyUI (localhost:8188) + **SDXL-Turbo** model (1024×1024, ~5 sec/image).
-  - *Storage*: Cloudinary (cloud image hosting, free tier, URL returned).
+  - *Engine*: **SDXL-Turbo via diffusers** (runs locally, no external tools needed, 1024×1024, ~5-15 sec/image on RTX 3070).
+  - *First Run*: Model auto-downloads from HuggingFace (~6.9 GB, cached permanently after that).
   - *Duty*: Reads the final article text, extracts 3–5 illustratable visual themes (NO landmarks, NO faces, NO text), selects style based on article type, assembles the prompt using a brand-locked template, generates locally, shows preview for approval, uploads to Cloudinary, and patches the Notion page cover with the URL.
   - *Critical Safety Rules*:
     - **NEVER** generate recognisable NZ landmarks (Sky Tower, Milford Sound, Hobbiton, etc.)
@@ -286,7 +286,7 @@ Runs automatically after Stage 5. Reads the finished article, generates a brand-
     - **Flat Editorial** (Monocle/airline poster style): city overviews, budget guides, itineraries, accommodation
     - **Risograph** (screen-print style): food/cafe articles, hiking/nature, culture/Māori
   - *Output*: Cloudinary URL + Notion cover updated + preview shown to user.
-  - *ComfyUI Prerequisite*: ComfyUI must be running (`python main.py --listen`) before Maia can generate. Maia checks automatically and alerts the user if it is offline.
+  - *Storage*: Cloudinary (free tier, 25 GB — enough for thousands of images).
 
 ---
 

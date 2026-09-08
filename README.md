@@ -21,12 +21,9 @@ A modular, multi-persona AI content engine for researching, drafting, rewriting,
 │   ├── critic.md                        # Stage 4: Morgan (Style critic, anti-slop & SEO editor)
 │   ├── notion_publisher.md              # Stage 5: Tane (Safe Notion database draft ingestion)
 │   └── image_designer.md               # Stage 6: Maia (Visual designer & cover image generator)
-├── scripts/                       # Image generation scripts & ComfyUI workflows
-│   ├── generate_image.py                # Main image generation + Cloudinary upload script
-│   ├── comfyui_setup.md                 # Step-by-step ComfyUI setup guide
-│   └── comfyui_workflows/
-│       ├── sdxl_turbo_flat_editorial.json  # Workflow: Flat Editorial style
-│       └── sdxl_turbo_risograph.json       # Workflow: Risograph print style
+├── scripts/                       # Local SDXL-Turbo image generation & Cloudinary scripts
+│   ├── generate_image.py                # Main image generation + Cloudinary upload script (Diffusers)
+│   └── batch_generate_covers.py         # Batch cover generation script
 ├── templates/                     # Dynamic templates per content format
 │   ├── article_schema.md                # Schema overview & dynamic metadata rules
 │   ├── pillar_guide.md                  # Comprehensive City Pillar Guide
@@ -103,7 +100,7 @@ A modular, multi-persona AI content engine for researching, drafting, rewriting,
 ### 🎨 Stage 6: Visual Designer Persona
 | Persona | Name | Role | Capabilities |
 |---|---|---|---|
-| **Visual Designer** | **Maia** | Cover Image Generator | Reads the finished article, extracts visual themes, builds a brand-locked prompt (2 styles: Flat Editorial / Risograph), generates 1024×1024 PNG locally via ComfyUI + SDXL-Turbo, uploads to Cloudinary, and patches the Notion page cover with the URL. Palette locked to Sage (#4A7C72) + Terracotta (#C4623A). Zero photorealism, zero landmarks, zero faces. |
+| **Visual Designer** | **Maia** | Cover Image Generator | Reads the finished article, extracts visual themes, builds a brand-locked prompt (2 styles: Flat Editorial / Risograph), generates 1152×864 (4:3) PNG locally via Diffusers + SDXL-Turbo on GPU, uploads to Cloudinary, and patches the Notion page cover with the URL. Palette locked to Sage (#4A7C72) + Terracotta (#C4623A). Zero photorealism, zero landmarks, zero faces. |
 
 ---
 

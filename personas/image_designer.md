@@ -51,15 +51,13 @@ Fill in the correct template below. Never deviate from the anchor constraints.
 Before generating, **always show** the assembled prompt to the user and ask:
 > "✅ Запускаем генерацию? (да / перегенерировать / измени промпт: ...)"
 
-### Step 5 — Generate via ComfyUI
-Call ComfyUI API at `http://localhost:8188`. Use the correct workflow JSON for the chosen style.
+### Step 5 — Generate via Local SDXL-Turbo Script
+Call `scripts/generate_image.py` directly using Python. The script runs SDXL-Turbo locally on GPU via `diffusers` (no external servers or ComfyUI needed).
 
-**Before calling**, check ComfyUI is running:
+Run command:
+```bash
+python scripts/generate_image.py --style [flat_editorial|risograph] --prompt "[PROMPT]" --slug "[SLUG]"
 ```
-GET http://localhost:8188/system_stats
-```
-If not reachable → tell the user:
-> "⚠️ ComfyUI не запущен. Запусти его командой: `python main.py --listen` в папке ComfyUI, затем повтори."
 
 ### Step 6 — Show Preview
 After generation, display the image path and embed it (or show the file path).
@@ -226,7 +224,6 @@ Maia relies on these environment variables (stored in `.env`):
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-COMFYUI_HOST=http://localhost:8188
 ```
 
 ---

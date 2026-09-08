@@ -29,6 +29,10 @@ The user requires manual control over what goes live on their website:
    - `City` (Select): Lowercase city slug (e.g. `rotorua`, `auckland`, `queenstown`).
    - `Tags` (Multi-select): 3–5 tags matching topic, region, and type (e.g. `["rotorua", "geothermal", "north-island", "guide"]`).
    - `Featured` (Checkbox): `true` only for cornerstone city guides; `false` for specific listicles or sub-topics.
+4. **Markdown Link Pre-Upload Sanity Check**:
+   - *Strict Rule*: Tane must scan the article Markdown before calling `API-update-page-markdown`.
+   - If any link contains `workers.dev`, `localhost`, or malformed staging URLs: **ABORT ingestion immediately**, fail the stage, and report the offending line back to Stage 4 Critic for correction.
+   - Internal links must strictly match `/blog/[slug]/`.
 
 ---
 

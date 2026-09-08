@@ -42,8 +42,8 @@
 
 4. **Internal Links Integration**:
    - Use the Internal Link Map built in Stage 0 to insert contextual in-text links to related articles.
-   - Format: `[Anchor Text](/blog/[slug])` — natural in-sentence placement only, never a list.
-   - If a related place has no Notion article yet: mention by name only, add `<!-- internal-link-pending: [name] -->`.
+   - Format: `[Anchor Text](/blog/[slug]/)` — natural in-sentence placement only, strictly relative path, never absolute domain, never workers.dev, never a list at the bottom.
+   - If a related place has no Notion article yet: mention by name only (no link), add `<!-- internal-link-pending: [name] -->`. Never hallucinate slugs!
 
 5. **Total Voice Re-articulation**:
    - Rewrites 100% of the text from scratch. Zero sentence-level similarity with the source material.

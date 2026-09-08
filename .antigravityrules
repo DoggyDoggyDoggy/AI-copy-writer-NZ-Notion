@@ -23,12 +23,17 @@ This document governs the 5-stage content generation, fact-checking, editorial c
 ## 🌐 0.0 Site Architecture & URL Pattern
 
 * **Notion Database ID**: `3bbba31b-5f1a-8064-874c-f694931bfc92`
-* **Site URL Pattern**: `/blog/[slug]`
-  - Example: `/blog/auckland-travel-guide-2026`
-  - Example: `/blog/hamilton-first-timers-travel-guide`
+* **Site Base URL**: `https://nz-travel-hub.com` (configured in `.env` as `SITE_URL`)
+* **Internal Link Format (STRICTLY RELATIVE)**: `[Anchor Text](/blog/[slug]/)`
+  - Example: `[Auckland Travel Guide](/blog/auckland-travel-guide-2026/)`
+  - Example: `[Hamilton Visitor Guide](/blog/hamilton-first-timers-travel-guide/)`
 * **Notion is the SOLE AND EXCLUSIVE source of truth** for all articles, drafts, and metadata.
 * **FORBIDDEN**: Never read, scan, or use local `articles/` files as source material or truth. The pipeline and all agents (Maia, Kiri, Copywriters, Sam, Morgan, Tane) must fetch live article data directly from Notion via Notion MCP (`API-post-search`, `API-retrieve-a-page`, `API-retrieve-page-markdown`, `API-query-data-source`).
-* **Internal links in articles must use this pattern**: `[Anchor Text](/blog/[slug])` using the exact `Slug` value stored in the Notion page properties.
+* **STRICT RULES FOR INTERNAL LINKS**:
+  1. **Strictly Relative Paths**: Internal blog links MUST ALWAYS be relative: `/blog/[slug]/`. Never prepend domain names (`workers.dev`, `nz-travel-hub.com`, `http://`, `https://`). Relative links seamlessly resolve across production, preview, staging, and localhost.
+  2. **Zero Slug Hallucinations**: You may ONLY link to slugs that already exist in Notion and were verified during Stage 0 Pre-Check.
+  3. **Unwritten / Missing Articles**: If an attraction, nearby town, or tour has NO published Notion article yet, DO NOT guess or invent a slug! Mention it by name as plain text and append an HTML comment: `<!-- internal-link-pending: [topic] -->`.
+  4. **Strict Ban on Staging Domains**: Any link containing `workers.dev`, `localhost`, or temporary URLs is strictly prohibited.
 
 ---
 
@@ -52,20 +57,25 @@ Before running any research or writing, the pipeline **MUST** perform two Notion
 
 ### Step B: Internal Link Index
 1. Query the Notion database: `API-query-data-source` filtering by `City` values in the **Surrounding Orbit** of the requested city (from `cities/[city-slug].md` → `🚗 Surrounding Orbit (Spokes)` section).
-2. Build an **Internal Link Map**: a simple list of `{ title, slug, city }` for every article that already exists in Notion for related cities.
-3. Pass this map to Kiri (Stage 1) and the Copywriter (Stage 2) as part of the context.
-4. The Copywriter uses this map to insert contextual internal links naturally in the article body — NOT as a "Related Articles" list at the bottom.
+2. Build an **Internal Link Map**: a verified list of `{ title, slug, city, path }` where `path = "/blog/" + slug + "/"` for every article that currently exists in Notion for related cities.
+3. Pass this verified map to Kiri (Stage 1) and the Copywriter (Stage 2) as part of the context.
+4. The Copywriter uses ONLY this map to insert contextual internal links naturally in the article body — NOT as a "Related Articles" list at the bottom.
 
 **Internal Link Formatting Rule**:
 ```markdown
-# ✅ Correct — natural, in-text link:
-"Spend a morning at Hamilton Gardens, then drive 45 minutes west to [Raglan](/blog/raglan-surf-guide), 
-New Zealand's most beloved surf town."
+# ✅ Correct — natural, in-text link with relative path:
+"Spend a morning at Hamilton Gardens, then drive 45 minutes west to [Raglan](/blog/raglan-surf-guide/), New Zealand's most beloved surf town."
+
+# ❌ Wrong — hardcoded staging domain or external domain:
+"drive 45 minutes west to [Raglan](https://new-zealand-travel-guide-website.pedan-denys.workers.dev/blog/raglan-surf-guide/)..."
+
+# ❌ Wrong — hallucinated/invented slug not in Notion:
+"check out our guide to [Hamilton day trips](/blog/hamilton-day-trips-surrounding-waikato/)..."
+(If no Notion article exists, write: "explore surrounding Waikato day trips<!-- internal-link-pending: hamilton-day-trips -->")
 
 # ❌ Wrong — artificial list format:
 ## Related Articles:
-- [Raglan Guide](/blog/raglan-surf-guide)
-- [Waitomo Guide](/blog/waitomo-caves-guide)
+- [Raglan Guide](/blog/raglan-surf-guide/)
 ```
 
 **If no related articles exist yet** (slug not in Notion): mention the place by name only, no broken link. Mark with `<!-- internal-link-pending: [place-name] -->` as an HTML comment so you can add the link later.
@@ -243,6 +253,7 @@ Immediately after copywriting or rewriting, the Fact-Checker persona validates e
 * **Sam — The Ground-Truth Auditor & Fact-Checker** (`personas/fact_checker.md`)
   - *Role*: Mandatory Stage 3 verification & truth-check.
   - *Duty*: Scans the draft text, extracts all claims (venues, addresses, opening hours, prices, travel times, trail conditions, historical/cultural facts), runs independent web searches (`search_web`, `read_url_content`), fixes any hallucinations or errors in place, and confirms authenticity.
+  - *Link Integrity Audit*: Audits all markdown links in the draft. Confirms every internal link is strictly relative (`/blog/[slug]/`) and matches a verified existing slug from the Stage 0 Internal Link Map. Replaces hallucinated slugs with real equivalents or strips them to plaintext with `<!-- internal-link-pending: [topic] -->`.
   - *Output*: Compiles a **Fact-Check Report** alongside the fact-verified article.
 
 ---
@@ -251,9 +262,12 @@ Immediately after copywriting or rewriting, the Fact-Checker persona validates e
 The editorial gatekeeper before database ingestion:
 
 * **Morgan — The Style Critic, Anti-Slop Editor & SEO Master** (`personas/critic.md`)
-  - *Role*: Mandatory Stage 4 editorial polish, anti-AI cleaning, Tier realism check, and Markdown finalization.
+  - *Role*: Mandatory Stage 4 editorial polish, anti-AI cleaning, Tier realism check, Link Gatekeeper, and Markdown finalization.
   - *Duty*: Strips AI cliches and buzzwords (*"nestled"*, *"tapestry"*, *"haven"*), enforces burstiness and human cadence, checks Tier-appropriate honesty (rejects false metropolitan claims for Tier 3 towns and respects Queenstown's alpine orbit), strengthens H2/H3 hooks, validates SEO alignment, and formats the final content into pristine Markdown.
-  - *Output*: Produces an **Editorial Polish & SEO Report** alongside the **Final Markdown Article**.
+  - *Mandatory Link Gatekeeper*: Strictly blocks and rejects any draft that contains:
+    1. Absolute staging or production domains in internal links (`workers.dev`, `nz-travel-hub.com`, `http://`, `https://`).
+    2. Hallucinated slugs not present in Notion. All links MUST be clean relative paths: `[Anchor Text](/blog/[slug]/)`.
+  - *Output*: Produces an **Editorial Polish & SEO Report** (including Link Integrity status) alongside the **Final Markdown Article**.
 
 ---
 
@@ -264,6 +278,13 @@ The safe delivery engine that stages content in Notion without triggering live s
   - *Role*: Mandatory Stage 5 database ingestion into Notion.
   - *Target Database*: `NZ Travel Articles` (`database_id: 3bbba31b-5f1a-8064-874c-f694931bfc92`).
   - *Critical Safety Rule*: **`Published` MUST ALWAYS BE `false`** (unchecked checkbox) and **`Date` MUST BE `null` / empty**. The user will personally log into Notion, review the draft, check `Published`, and choose the date of publication.
+  - *Pre-Upload Domain Gate*: Rejects ingestion immediately if the markdown body contains `workers.dev` or unverified external links.
+  - *Universal & National Article Classification Rule*:
+    - **National Pillars & Seasonal Guides**: Any article that covers New Zealand nationwide or spans topics not restricted to a single city (e.g. *Freedom Camping Guide*, *Natural Hot Springs*, *Best Day Hikes*, *Specialty Coffee*, *Craft Beer Trail*, *Lord of the Rings Locations*, *Best Time to Visit NZ*, *Ski Season Guide*) **MUST** have:
+      1. `City = "new-zealand"` (NEVER assign an arbitrary city like `queenstown` or `auckland`).
+      2. `Tags` MUST include `"new-zealand"`.
+    - **Road Trips**: Inter-regional drives spanning multiple destinations (e.g. *Auckland to Rotorua*) retain their departure/origin city in `City`, but must include multi-region tags.
+    - **City-Specific Guides**: Retain their exact city slug from the 15 supported cities (`auckland`, `queenstown`, `wellington`, etc.).
   - *Duty*: Creates the page via `API-post-page` with formatted properties (`Title`, `Slug`, `Description `, `City`, `Tags`, `Featured`, `Published: false`), injects full Markdown via `API-update-page-markdown`, and provides the user with the direct Notion link for review.
   - *Output*: Direct Notion Draft URL and Staged Properties Summary.
 

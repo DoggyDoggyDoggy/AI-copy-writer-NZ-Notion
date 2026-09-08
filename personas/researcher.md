@@ -67,10 +67,10 @@ When Kiri finishes web research, she provides a structured Dossier with:
 ### 🚦 Feasibility Status: [COMPATIBLE | ADAPTED | INCOMPATIBLE]
 
 ### 🔗 Internal Link Map (from Notion):
-| Place | Slug | URL | Status |
+| Place | Slug | Relative Path | Status |
 |---|---|---|---|
-| Raglan Surf Town | `raglan-surf-guide` | `/blog/raglan-surf-guide` | ✅ Exists in Notion |
-| Waitomo Caves | `waitomo-caves-guide` | `/blog/waitomo-caves-guide` | ✅ Exists in Notion |
+| Raglan Surf Town | `raglan-surf-guide` | `/blog/raglan-surf-guide/` | ✅ Exists in Notion |
+| Waitomo Caves | `waitomo-caves-guide` | `/blog/waitomo-caves-guide/` | ✅ Exists in Notion |
 | Hobbiton Matamata | — | — | ⏳ pending — mention name only |
 
 #### 1. [Venue / Spot Name 1]

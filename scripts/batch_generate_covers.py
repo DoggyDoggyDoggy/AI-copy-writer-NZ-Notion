@@ -11,8 +11,10 @@ Key settings:
   - Text guard: NO_TEXT_PREFIX injected at start of every positive prompt
   - Auto-retry: up to MAX_RETRIES=3 if pixel-based text detection fires
   - SDXL-Turbo: 4 steps, CFG=0.0 (distilled — negative prompt has no effect)
+  - Zero local storage invariant: deletes temporary local files immediately after Cloudinary upload
 """
 
+import argparse
 import json
 import os
 import sys
@@ -33,9 +35,9 @@ ROOT_DIR = Path(__file__).parent.parent
 OUTPUT_DIR = ROOT_DIR / "output_images"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-SCRATCH_DIR = Path(r"C:\Users\pedan\.gemini\antigravity-ide\brain\c262a2d1-69a8-4d71-87ae-509641f1839a\scratch")
-PROMPTS_FILE = SCRATCH_DIR / "maia_prompts_map.json"
-RESULTS_FILE = SCRATCH_DIR / "batch_results.json"
+DEFAULT_SCRATCH_DIR = Path(r"C:\Users\pedan\.gemini\antigravity-ide\brain\0a11a61f-226d-43dc-8fce-a07e7cf6460e\scratch")
+DEFAULT_PROMPTS_FILE = DEFAULT_SCRATCH_DIR / "maia_prompts_map.json"
+DEFAULT_RESULTS_FILE = DEFAULT_SCRATCH_DIR / "batch_results.json"
 
 def load_env():
     env_path = ROOT_DIR / ".env"
@@ -80,10 +82,7 @@ MAX_RETRIES = 3
 
 # ✅ Anti-text prefix — injected into EVERY positive prompt.
 # SDXL-Turbo (CFG=0.0) ignores negative prompts; the positive prompt is our ONLY lever.
-NO_TEXT_PREFIX = (
-    "pure illustration, zero text, zero typography, zero letters, zero words, "
-    "no captions, no labels, no watermark, no writing, "
-)
+NO_TEXT_PREFIX = "pure vector illustration, zero text, no letters, no words, no labels, "
 
 # ---------------------------------------------------------------------------
 # Pixel-based text detection (no extra deps — uses PIL only)
@@ -137,24 +136,49 @@ def detect_text_in_image(image) -> bool:
 # Batch Processing Engine
 # ---------------------------------------------------------------------------
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Batch generate covers and upload to Cloudinary")
+    parser.add_argument("--prompts-file", type=str, default=str(DEFAULT_PROMPTS_FILE), help="Path to prompts map JSON")
+    parser.add_argument("--results-file", type=str, default=str(DEFAULT_RESULTS_FILE), help="Path to save results JSON")
+    parser.add_argument("--limit", type=int, default=0, help="Limit number of articles to process (0 = all)")
+    parser.add_argument("--slug", type=str, default="", help="Process only a specific article slug")
+    parser.add_argument("--force", action="store_true", help="Force regenerate even if already in results")
+    return parser.parse_args()
+
+
 def main():
-    if not PROMPTS_FILE.exists():
-        print(f"[ERR] Prompts map file not found: {PROMPTS_FILE}")
+    args = parse_args()
+    prompts_path = Path(args.prompts_file)
+    results_path = Path(args.results_file)
+
+    if not prompts_path.exists():
+        print(f"[ERR] Prompts map file not found: {prompts_path}")
         sys.exit(1)
 
-    with open(PROMPTS_FILE, "r", encoding="utf-8") as f:
+    with open(prompts_path, "r", encoding="utf-8") as f:
         articles = json.load(f)
+
+    if args.slug:
+        articles = [a for a in articles if a["slug"] == args.slug]
+        if not articles:
+            print(f"[ERR] No article found with slug: {args.slug}")
+            sys.exit(1)
+
+    if args.limit > 0:
+        articles = articles[:args.limit]
 
     print(f"==================================================")
     print(f"🎨 Maia Batch Image Generation Pipeline")
     print(f"Total articles to process: {len(articles)}")
+    print(f"Prompts file: {prompts_path}")
+    print(f"Results file: {results_path}")
     print(f"==================================================")
 
     # Load existing results if resuming
     results = {}
-    if RESULTS_FILE.exists():
+    if results_path.exists() and not args.force:
         try:
-            with open(RESULTS_FILE, "r", encoding="utf-8") as f:
+            with open(results_path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
                 for item in existing:
                     results[item["id"]] = item
@@ -207,6 +231,10 @@ def main():
         print(f"\n[{idx}/{len(articles)}] 📄 [{city.upper()}] {title}", flush=True)
         print(f"   Slug: {slug} | Style: {style}", flush=True)
 
+        if not args.force and page_id in results and results[page_id].get("cloudinary_url"):
+            print(f"   [INFO] Already processed: {results[page_id]['cloudinary_url']}", flush=True)
+            continue
+
         image_path = OUTPUT_DIR / f"{slug}.png"
 
         # Check if already generated
@@ -227,8 +255,8 @@ def main():
                     prompt=full_prompt,
                     num_inference_steps=4,
                     guidance_scale=0.0,
-                    height=IMAGE_HEIGHT,   # 768 (4:3)
-                    width=IMAGE_WIDTH,     # 1024 (4:3)
+                    height=IMAGE_HEIGHT,   # 864 (4:3)
+                    width=IMAGE_WIDTH,     # 1152 (4:3)
                     generator=torch.Generator(device=device).manual_seed(seed),
                 )
                 candidate = result.images[0]
@@ -254,29 +282,25 @@ def main():
         else:
             print(f"   [INFO] Local image already exists: {image_path.name}", flush=True)
 
-        # Check if already uploaded
-        cloudinary_url = None
-        if page_id in results and results[page_id].get("cloudinary_url"):
-            cloudinary_url = results[page_id]["cloudinary_url"]
-            print(f"   [INFO] Already uploaded: {cloudinary_url}", flush=True)
-        else:
-            upload_res = cloudinary.uploader.upload(
-                str(image_path),
-                public_id=f"nz-travel/{slug}",
-                overwrite=True,
-                folder="nz-travel",
-            )
-            cloudinary_url = upload_res["secure_url"]
-            print(f"   [OK] Cloudinary URL: {cloudinary_url}", flush=True)
-            count_uploaded += 1
+        # Upload to Cloudinary
+        print(f"   [☁️ Cloudinary] Uploading...", flush=True)
+        upload_res = cloudinary.uploader.upload(
+            str(image_path),
+            public_id=slug,
+            folder="nz-travel",
+            overwrite=True,
+        )
+        cloudinary_url = upload_res["secure_url"]
+        print(f"   [OK] Cloudinary URL: {cloudinary_url}", flush=True)
+        count_uploaded += 1
 
-            # Auto-cleanup: remove local temp file immediately after Cloudinary upload
-            if image_path.exists():
-                try:
-                    image_path.unlink()
-                    print(f"   [CLEANUP] Deleted local temporary file: {image_path.name}", flush=True)
-                except Exception as e:
-                    print(f"   [WARN] Could not delete local temp file: {e}", flush=True)
+        # Auto-cleanup: remove local temp file immediately after Cloudinary upload
+        if image_path.exists():
+            try:
+                image_path.unlink()
+                print(f"   [CLEANUP] Deleted local temporary file: {image_path.name}", flush=True)
+            except Exception as e:
+                print(f"   [WARN] Could not delete local temp file: {e}", flush=True)
 
         results[page_id] = {
             "id": page_id,
@@ -289,8 +313,9 @@ def main():
             "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")
         }
 
-        # Save progress incrementally to scratch/batch_results.json
-        with open(RESULTS_FILE, "w", encoding="utf-8") as f:
+        # Save progress incrementally to results JSON
+        results_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(results_path, "w", encoding="utf-8") as f:
             json.dump(list(results.values()), f, ensure_ascii=False, indent=2)
 
     total_duration = time.time() - start_total_time
@@ -299,7 +324,7 @@ def main():
     print(f"   Generated : {count_generated}", flush=True)
     print(f"   Uploaded  : {count_uploaded}", flush=True)
     print(f"   Total in results: {len(results)}", flush=True)
-    print(f"   Saved to  : {RESULTS_FILE}", flush=True)
+    print(f"   Saved to  : {results_path}", flush=True)
     print(f"==================================================", flush=True)
 
 if __name__ == "__main__":

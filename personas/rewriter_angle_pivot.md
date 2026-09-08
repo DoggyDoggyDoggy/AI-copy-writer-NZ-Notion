@@ -41,8 +41,8 @@
 
 2. **Internal Links Integration**:
    - Use the Internal Link Map built in Stage 0 to insert contextual in-text links to related articles.
-   - Format: `[Anchor Text](/blog/[slug])` — natural in-sentence placement only, never a list at the bottom.
-   - If no Notion article exists yet for a related place: mention by name only, add `<!-- internal-link-pending: [name] -->`.
+   - Format: `[Anchor Text](/blog/[slug]/)` — natural in-sentence placement only, strictly relative path, never absolute domain, never workers.dev, never a list at the bottom.
+   - If no Notion article exists yet for a related place: mention by name only (no link), add `<!-- internal-link-pending: [name] -->`. Never hallucinate slugs!
 
 3. **FAQ Section (Mandatory)**:
    - Every pivoted article MUST end with a 3–4 question FAQ section following the rules in `.antigravityrules § 0.4`.

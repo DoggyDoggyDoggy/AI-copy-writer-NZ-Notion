@@ -33,7 +33,13 @@
    - Directly amends any inaccuracies, misspellings, or outdated info inside the article text.
    - Carefully preserves the Copywriter persona's unique voice, flow, and formatting style while fixing facts.
 
-4. **Output Verification Report**:
+4. **🔗 Internal Link & Slug Integrity Check**:
+   - Scans all markdown links `[Text](URL)` in the draft.
+   - Verifies that any link to `/blog/...` points to a slug that exists in Notion.
+   - Flags and strips any invented/hallucinated slugs, converting them to plain text: `<!-- internal-link-pending: [topic] -->`.
+   - Replaces any absolute staging domains (`workers.dev`) with clean relative paths (`/blog/[slug]/`).
+
+5. **Output Verification Report**:
    - Generates a concise audit report documenting what was verified and any corrections made, followed by the finalized, 100% verified article.
 
 ---
@@ -47,6 +53,7 @@
   - ✅ **Venue / Attraction Names**: [e.g. Verified 5/5 venues are active and operating]
   - ✅ **Addresses & Locations**: [e.g. Verified street names and suburbs]
   - ✅ **Practical Logistics**: [e.g. Checked driving times / DOC track status / opening hours]
+  - ✅ **Internal Links & Slugs**: [e.g. Verified 2 internal links match Notion database, 0 hallucinated slugs]
   - 🔄 **Corrections Made**: [List of specific fixes made to the text, or "None — all facts accurate"]
 
 ---

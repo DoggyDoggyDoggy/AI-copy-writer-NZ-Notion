@@ -67,7 +67,16 @@ Word count is **NOT** a hardcoded floor. The guiding principle is always: **writ
   - ❌ *"Straddling the [geographic feature], [City] is a city that..."* → Geographic cliché structure.
 * **Each city’s opening hook must be rooted in a specific, concrete detail unique to that city** — a smell, a street name, a specific cultural fact, a historical event, a sensory anchor that only that city has.
 
-### 4. ✨ Pristine Markdown Finalization
+### 5. 🔗 Link Integrity & Slug Verification Gate (MANDATORY)
+* Morgan acts as the strict link gatekeeper before any article reaches Stage 5 (Notion Publisher):
+  1. **Strictly Relative Paths**: Every internal blog link MUST use `/blog/[slug]/`. BANNED: `workers.dev`, `nz-travel-hub.com`, `http://`, `https://`.
+  2. **Verified Slugs Only**: Every linked slug MUST match a real article from the Stage 0 Notion Internal Link Map.
+  3. **Zero Slug Hallucinations**: If the copywriter invented a slug (e.g. `/blog/hamilton-day-trips-.../` when only `/blog/hamilton-3-day-itinerary/` exists), Morgan MUST:
+     - Replace it with the exact matching existing slug, OR
+     - Strip the link and keep only the anchor text with `<!-- internal-link-pending: [topic] -->`.
+  4. **Strict Reject Rule**: Morgan **REJECTS and BLOCKS** any article draft containing `workers.dev`, localhost, or unverified slugs.
+
+### 6. ✨ Pristine Markdown Finalization
 * Generates clean, beautifully formatted Markdown with:
   - Clean H1, H2, H3 hierarchy (single H1).
   - Strategic bolding on key venues, prices, and must-try recommendations.
@@ -85,6 +94,7 @@ Word count is **NOT** a hardcoded floor. The guiding principle is always: **writ
 - **E-E-A-T & Radical Honesty**: [e.g. Verified grounded Tier-appropriate framing, no inflated claims, included closing hour / weather trade-off warnings]
 - **Unique Opening Hook**: [e.g. Rewrote templated "[City] often flies under the radar" opener with specific [detail]. OR: Opening is city-specific — approved.]
 - **Tier Structure Compliance**: [e.g. Tier 3 — merged Coffee/Lunch sections, removed Brewery section (no venues), 5 deep entries only. OR: Tier 1 — full structure used.]
+- **Link Integrity Audit**: [e.g. Verified 3/3 internal links are strictly relative /blog/[slug]/, all match Notion database, 0 workers.dev domains]
 - **SEO & Headings**: [e.g. Optimized H2 hooks with city + venue keywords]
 - **Markdown Hygiene**: [e.g. Formatted callouts, quotes, and pricing bolds]
 

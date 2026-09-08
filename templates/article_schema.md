@@ -13,8 +13,8 @@ Instead of a static template, each article's properties are generated dynamicall
 | **`Title`** | `[Punchy Hook / Number] + [Target City/Region] + [Specific Topic / Angle]` | • *"12 Best Things to Do in Napier: Art Deco, Wine & Coastal Trails"*\n• *"Where to Eat in Dunedin: Best Cafes, Student Bites & Breweries"*\n• *"3 Days in Queenstown: The Ultimate Adventure & Wine Itinerary"* |
 | **`Slug`** | Lowercase, hyphenated, clean URL slug derived from topic | • `napier-best-things-to-do`\n• `dunedin-food-guide-best-cafes`\n• `queenstown-3-day-itinerary` |
 | **`Description `** | 140–160 char meta description containing key search intent + local hook *(Note the trailing space in property name)* | • *"Discover the top 12 things to do in Napier, from historic 1930s Art Deco walking tours to biking scenic Hawke's Bay winery trails."* |
-| **`City`** | Exact lowercase city slug matching the 15 supported cities | `auckland`, `queenstown`, `wellington`, `napier`, `dunedin`, etc. |
-| **`Tags`** | 3–5 multi-select tags: `[city, article-type, island, specific-theme]` | `["napier", "things-to-do", "north-island", "wine"]` |
+| **`City`** | Exact lowercase city slug matching the 15 supported cities, OR `new-zealand` for nationwide/universal articles | `auckland`, `queenstown`, `wellington`, `new-zealand` (for national pillars/seasonal guides) |
+| **`Tags`** | 3–5 multi-select tags: `[city/national, article-type, island, specific-theme]` | `["new-zealand", "travel-guide", "hiking"]` or `["napier", "things-to-do", "north-island", "wine"]` |
 | **`Date`** | Left `null` / empty on initial ingestion so the user selects their preferred publication date manually in Notion | `null` (Manual Selection in Notion) |
 | **`Published`** | **STRICTLY `false`** (Unchecked draft mode to prevent automatic website deployment) | `false` |
 | **`Featured`** | Checkbox boolean (`true` for cornerstone/pillar city guides, `false` for sub-topics) | `false` |
@@ -46,4 +46,10 @@ Instead of a static template, each article's properties are generated dynamicall
 ### 5. Budget, Practical & Off-Season Guide
 * **File**: `templates/budget_practical.md`
 * **Focus**: Free attractions, budget hacks, camping/holiday parks, weather reality, road safety.
+* **Featured**: `false`
+
+### 6. National & Universal Guides (Nationwide Thematic & Seasonal)
+* **Focus**: Articles covering the whole country or multi-regional topics (Freedom Camping, Hot Springs, Day Hikes, Best Time to Visit, Skiing, Coffee Culture, Craft Beer, LOTR Locations).
+* **City**: STRICTLY `"new-zealand"` (prevents polluting individual city hubs on website and Notion).
+* **Tags**: Must include `"new-zealand"` tag alongside thematic and regional tags.
 * **Featured**: `false`
